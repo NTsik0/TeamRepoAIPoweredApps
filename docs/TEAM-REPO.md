@@ -10,8 +10,8 @@
 
 | Member | GitHub username | Standing role |
 |---|---|---|
-| Nika Tsikaridze | NTsik0 | Repo keeper |
-| [Teammate 2 name] | [username] | Spec keeper |
+| Nikoloz Tsikaridze | NTsik0 | Repo keeper |
+| Guram Tsiklauri | Gaaa-3 | Spec keeper |
 | [Teammate 3 name] | [username] | Eval keeper (from Week 4) |
 | [Teammate 4 name, or delete row] | [username] | |
 
@@ -24,7 +24,7 @@ Teams of two: each person holds two roles. Roles decide who keeps a file honest,
 **Slice rota (recommended):** the person who drives the agent rotates every slice, and the reviewer is the next person in the rota, so everyone drives at least one slice before Week 4.
 
 Our capstone in one sentence: KIU CourseMate answers KIU students' questions about a course (deadlines, grading, policies) from the official course documents, so they stop missing dates and instructors stop answering the same question twenty times.
-Repo: https://github.com/NTsik0/TeamRepoAIPoweredApps · Instructor access: ZA-KIU collaborator · Team OpenRouter key issued to: Nika Tsikaridze (never paste the key here)
+Repo: https://github.com/NTsik0/TeamRepoAIPoweredApps · Instructor access: ZA-KIU collaborator · Team OpenRouter key issued to: Nikoloz Tsikaridze (never paste the key here)
 
 ---
 

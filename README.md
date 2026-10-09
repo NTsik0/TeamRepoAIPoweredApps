@@ -1,6 +1,6 @@
 # KIU CourseMate
 
-Answers KIU students' questions about a course (deadlines, grading, policies) from the official course documents, and says so when the answer isn't there. CS6920 capstone · Fall 2026 · KIU CourseMate team · Nika Tsikaridze, [teammates]
+Answers KIU students' questions about a course (deadlines, grading, policies) from the official course documents, and says so when the answer isn't there. CS6920 capstone · Fall 2026 · KIU CourseMate team · Nikoloz Tsikaridze, Guram Tsiklauri
 
 **Status:** Week 2 · `POST /ask` answers CS6920 questions from the course document, refuses when nothing matches, and logs token usage and latency for every model call.
 
@@ -42,4 +42,4 @@ Key decisions: [docs/decisions/](docs/decisions/)
 [docs/case-study.md: what we built, what we delegated, what we measured, what we would change · from Week 13]
 
 ## Team and how we work
-Nika Tsikaridze (repo keeper), [teammates and roles] · Team rules: [docs/TEAM-REPO.md](docs/TEAM-REPO.md) · Spec: [docs/spec.md](docs/spec.md) · Delegation log: [docs/delegation-log.md](docs/delegation-log.md) · Journals: [docs/journal/](docs/journal/) · Team contract: [TEAM-CONTRACT.md](TEAM-CONTRACT.md)
+Nikoloz Tsikaridze (repo keeper), Guram Tsiklauri (spec keeper) · Team rules: [docs/TEAM-REPO.md](docs/TEAM-REPO.md) · Spec: [docs/spec.md](docs/spec.md) · Delegation log: [docs/delegation-log.md](docs/delegation-log.md) · Journals: [docs/journal/](docs/journal/) · Team contract: [TEAM-CONTRACT.md](TEAM-CONTRACT.md)
