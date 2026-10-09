@@ -6,7 +6,7 @@
 | Name | GitHub | Primary role | Backup role |
 |---|---|---|---|
 | Nika Tsikaridze | NTsik0 | Repo keeper | [backup] |
-| [Teammate 2] | [username] | Spec keeper | [backup] |
+| Guram Tsiklauri | Gaaa-3 | Spec keeper | [backup] |
 | [Teammate 3] | [username] | Eval keeper (from Week 4) | [backup] |
 
 Roles rotate or stay fixed: [choose]. On Demo Day, anyone answers anything, so backup roles are how you learn each other's parts.
@@ -25,3 +25,4 @@ Step 1: name it inside the team within 48 hours. Step 2: if unresolved in one we
 
 Signed (a commit from each member on this file counts as a signature).
 - Nika Tsikaridze
+- Guram Tsiklauri
