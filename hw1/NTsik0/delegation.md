@@ -10,4 +10,8 @@
 
 **What was NOT verified by the agent.** The golden questions against the real model: no API key in that session. Results in `golden.md` come only from my run of `run_golden.py`.
 
-**My own checks.** [Fill in honestly before submitting: e.g. "read tests before code", "ran `pytest hw1/NTsik0`: N passed", "ran the golden script: N/3", "ran the CLI on cs6920 and compared each deadline with the document", plus anything you changed and why.]
+**My own checks.**
+- Ran `pytest hw1/NTsik0` on my own machine: 18 passed before the fix, 20 passed after.
+- Ran `run_golden.py` with my key. First attempt failed because I had exported the placeholder text instead of my real key (`HTTPStatusError`); fixed by setting the real key.
+- Real run: 1/3. Instead of accepting it, I printed the raw model output and found the answer was cut off (`TOKENS OUT: 393`, JSON stopped after the first `{`). I gave that to the agent, which fixed spec, code and tests; I pulled the fix and checked tests again (20 passed).
+- Re-ran the golden questions: 3/3.
