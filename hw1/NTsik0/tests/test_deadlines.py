@@ -127,7 +127,7 @@ def test_ac4_one_usage_line_per_call(log_path):
 def test_ac5_context_and_token_caps(log_path):
     fake = FakeLLM(GOOD)
     find_deadlines("cs6920", fake, log_path)
-    assert fake.calls[0]["max_tokens"] == MAX_TOKENS == 400
+    assert fake.calls[0]["max_tokens"] == MAX_TOKENS == 1500
     secs = deadline_sections(load_sections("cs6920"))
     assert sum(len(s.text) for s in secs) <= MAX_CHARS
 
@@ -136,3 +136,43 @@ def test_ac5_cap_truncates_large_documents():
     from deadlines import Section
     big = [Section(f"S{i}", "due " * 2000) for i in range(5)]
     assert sum(len(s.text) for s in deadline_sections(big)) <= MAX_CHARS
+
+
+# --- AC5 · Cut-off answers are reported, not misread ----------------------------
+
+class _Resp:
+    def __init__(self, payload):
+        self._payload = payload
+
+    def raise_for_status(self):
+        pass
+
+    def json(self):
+        return self._payload
+
+
+def _fake_post(finish_reason, content):
+    def post(url, headers, json, timeout):
+        post.sent = json
+        return _Resp({"choices": [{"finish_reason": finish_reason, "message": {"content": content}}],
+                      "usage": {"prompt_tokens": 10, "completion_tokens": 393}})
+    return post
+
+
+def test_ac5_cut_off_answer_says_so(monkeypatch):
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    monkeypatch.setattr(deadlines.httpx, "post", _fake_post("length", '{"deadlines": [{'))
+    with pytest.raises(DeadlineError) as e:
+        deadlines.OpenRouterClient().complete([], MAX_TOKENS)
+    assert e.value.code == "model_bad_output"
+    assert "cut off" in e.value.message
+
+
+def test_ac5_client_sends_cap_and_low_reasoning(monkeypatch):
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    post = _fake_post("stop", json.dumps(GOOD))
+    monkeypatch.setattr(deadlines.httpx, "post", post)
+    result = deadlines.OpenRouterClient().complete([], MAX_TOKENS)
+    assert post.sent["max_tokens"] == 1500
+    assert post.sent["reasoning"] == {"effort": "low"}
+    assert json.loads(result.text) == GOOD

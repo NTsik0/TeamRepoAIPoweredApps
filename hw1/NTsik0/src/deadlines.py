@@ -17,7 +17,7 @@ DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 DEFAULT_MODEL = "google/gemini-3.8-flash"
 MAX_CHARS = 4000
-MAX_TOKENS = 400
+MAX_TOKENS = 1500  # includes the model's hidden reasoning tokens (see delegation.md)
 
 _SAFE_ID = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
 _DEADLINE_WORDS = re.compile(r"\bdue\b|deadline|end of week|23:59", re.IGNORECASE)
@@ -109,15 +109,20 @@ class OpenRouterClient:
                 OPENROUTER_URL,
                 headers={"Authorization": f"Bearer {key}"},
                 json={"model": self.model, "messages": messages, "max_tokens": max_tokens,
-                      "response_format": {"type": "json_object"}},
+                      "response_format": {"type": "json_object"},
+                      "reasoning": {"effort": "low"}},
                 timeout=30,
             )
             r.raise_for_status()
             data = r.json()
         except (httpx.HTTPError, ValueError) as e:
             raise DeadlineError("model_error", f"model call failed: {type(e).__name__}") from None
+        choice = data["choices"][0]
+        if choice.get("finish_reason") == "length":
+            raise DeadlineError("model_bad_output",
+                                f"answer cut off at max_tokens={max_tokens} (finish_reason=length)")
         usage = data.get("usage") or {}
-        return LLMResult(data["choices"][0]["message"]["content"] or "",
+        return LLMResult(choice["message"]["content"] or "",
                          int(usage.get("prompt_tokens", 0)), int(usage.get("completion_tokens", 0)))
 
 
