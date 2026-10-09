@@ -1,4 +1,4 @@
-# Pattern Journal · Nika Tsikaridze (NTsik0)
+# Pattern Journal · Nikoloz Tsikaridze (NTsik0)
 
 *One entry per week, 2 to 3 sentences: pattern · where I applied it · what I delegated to AI · how I verified it. Graded only inside HW1 (Weeks 1 to 4), HW2 (Weeks 5 to 7) and one Repository Review line (Weeks 10 to 14). Honest beats polished.*
 

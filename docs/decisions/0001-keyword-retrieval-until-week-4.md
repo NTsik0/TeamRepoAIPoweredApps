@@ -1,6 +1,6 @@
 # 0001 · Keyword retrieval until Week 4
 
-**Date:** Week 2 · **Decided by:** Nika Tsikaridze [+ teammates]
+**Date:** Week 2 · **Decided by:** Nikoloz Tsikaridze; approved in review by Guram Tsiklauri (PR #2)
 
 **Context.** The first slice must send only relevant course sections to the model (spec Context list, AC1) and refuse without a model call when nothing matches (AC2). Embeddings and RAG are taught in Week 4.
 

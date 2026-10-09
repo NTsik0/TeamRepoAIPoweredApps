@@ -23,6 +23,6 @@ Format:
 - **Came back wrong:** while writing `test_ac1_model_sees_only_retrieved_sections`, the agent saw that plain keyword overlap would send Watch-checks and Demo Day for "When is HW1 due?" (they contain "due"), breaking the Context list. Fixed before the first run with a relative threshold (keep sections scoring at least 0.6 of the best).
 - **Caught by:** tests-first: that test asserts Watch-checks text is not in the prompt. Then three deliberate breakages (always call the model, skip the log write, remove the threshold): each made at least one test fail. 17 tests pass with no `OPENROUTER_API_KEY` and no network. [Reviewer: run `pytest` yourself and read the output.]
 - **CI caught:** first CI run failed: `ModuleNotFoundError: No module named 'src'`. The agent had run tests with `python -m pytest`, which puts the repo root on the import path; CI runs plain `pytest`, which does not. Fixed with `pythonpath = .` in `pytest.ini`; reproduced the failure locally with `python -P -m pytest` (2 errors) and confirmed the fix (17 passed) before pushing.
-- **Decision:** [merged / fixed / re-delegated: fill in after the teammate's review]
+- **Decision:** merged. Gaaa-3 (Guram Tsiklauri) approved PR #2 and squash-merged it on 2026-10-09, after CI went green on the fix.
 - **AGENTS.md change:** "Always" line now says to run plain `pytest`, not `python -m pytest`, because that difference hid the CI failure. Gotcha: a stale `__pycache__` made one restored run look red; clear it if results look impossible.
 - **Cost:** one session, 5 test runs, 0 model calls.
