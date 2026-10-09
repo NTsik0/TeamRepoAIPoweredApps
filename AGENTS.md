@@ -16,7 +16,7 @@ test:     pytest   (must pass on a clean clone, with no network and no OPENROUTE
 - Every new feature ships with a test and, from Week 4, a golden question in `evals/`.
 
 ## Always
-- Run the test command before saying you are done, and paste the result
+- Run the test command exactly as written (plain `pytest`, not `python -m pytest`) before saying you are done, and paste the result
 - Propose a plan and wait for approval before writing files
 
 ## Ask first
