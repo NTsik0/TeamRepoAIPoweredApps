@@ -12,9 +12,7 @@ Eval keeper (from Week 4): shared by both of us. Roles stay fixed for the semest
 
 ## How we decide
 Small things: whoever is doing the work decides. Big things (scope, stack, pivots): we both have to agree. If we still disagree after one sync, we ask the instructor.
-
-## When we work
-Weekly sync: the day after each lab, 30 minutes, on Discord. Core hours we can both be reached: [fill in, e.g. weekdays 18:00–22:00 Tbilisi time].
+Weekly sync: the day after each lab, 30 minutes, on Discord. Core hours we can both be reached: weekdays 18:00–22:00 Tbilisi time.
 
 ## Contribution
 Work is visible in commits and the journal. If someone carries or someone coasts, we say it in week terms, not in Week 15.
