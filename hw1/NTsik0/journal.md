@@ -1,13 +1,11 @@
-# Pattern Journal · Weeks 1 to 4 · NTsik0
+# Pattern Journal · Nikoloz Tsikaridze (NTsik0)
 
-*Copy of `docs/journal/NTsik0.md`, Weeks 1 to 4, as HW1 asks. Keep both in sync.*
+*One entry per week, 2 to 3 sentences: pattern · where I applied it · what I delegated to AI · how I verified it.*
 
-> **Rewrite every entry in your own words before submitting.** The drafts below record what happened; the journal is graded as yours and the course can ask you to explain any line. Weeks 3 and 4 are yours to write after those lectures.
+**W1 · Context as Budget** · I applied it in the napkin math of our team spec: capping the context at 3 sections and 4,000 characters (about 1,300 prompt tokens) brought the monthly estimate from about $24 down to about $16. I delegated the arithmetic to Claude and checked it by redoing it by hand (1,300 × $0.75 + 200 × $3.75 per million tokens, × 300 requests × 30 days). In HW1 my first token budget was wrong: the model spent 393 of 400 tokens on hidden reasoning, so I learned that reasoning tokens count against the budget too.
 
-**W1 · Context as Budget** · Applied in the spec napkin math: capping context at 4,000 characters (about 1,300 prompt tokens) brought the team estimate from about $24 to about $16 a month, and HW1's deadline finder costs about $0.002 per call. Delegated the arithmetic to Claude; verified by redoing it by hand. [Your words.]
+**W2 · Spec Before Code** · I applied it by upgrading the team spec to v1 and writing the HW1 spec before any code, with acceptance criteria that a test can decide on its own. I delegated the spec critique, the first team slice and the HW1 build to Claude, and checked the work by reading the tests before the code, running `pytest` myself and letting CI catch a real bug (`No module named 'src'`). From the critique we did not take the idea of storing every question in a database, because our spec says no personal data and a question can contain a student's name.
 
-**W2 · Spec Before Code** · Applied by writing team spec v1 and the HW1 spec before any code, with acceptance criteria a script can check. Delegated the spec critique, the team slice and HW1's build to Claude. Verified by reading tests before code, running them myself, and watching CI catch a real bug (`No module named 'src'`). Rejected from the agent's critique: [the one you rejected and why, from docs/spec-critique.md].
+**W3 · Uncertainty-Aware UX** · I applied it by making both features say clearly when they do not know, instead of guessing: CourseMate answers "I can't find that in the course documents" without calling the model, and HW1 reports how many deadlines it `dropped` and says "answer cut off" when the model's reply is incomplete. Claude wrote the code; I verified it with tests that check the exact refusal text and the cut-off error, and I saw the cut-off case happen for real in my first golden run. We have not done the Week 3 multimodal lab yet.
 
-**W3 · Uncertainty-Aware UX** · [After the Week 3 lecture: where you applied it, what you delegated, how you verified it.]
-
-**W4 · Grounded Generation** · [After the Week 4 lecture. Note: HW1's AC2 drop-what-isn't-in-the-source check is already grounding.]
+**W4 · Grounded Generation** · I applied it in HW1: the model only sees the course sections that mention deadlines, and my code drops any deadline that does not appear word for word in the section it cites, so the model cannot invent a date. Claude wrote the check; I verified it with a unit test where a fake model invents a date (it gets dropped) and with golden question G2 against the real model, which returned `dropped=0`, 3/3 passed.
