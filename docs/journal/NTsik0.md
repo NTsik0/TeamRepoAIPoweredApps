@@ -1,15 +1,11 @@
 # Pattern Journal · Nikoloz Tsikaridze (NTsik0)
 
-*One entry per week, 2 to 3 sentences: pattern · where I applied it · what I delegated to AI · how I verified it. Graded only inside HW1 (Weeks 1 to 4), HW2 (Weeks 5 to 7) and one Repository Review line (Weeks 10 to 14). Honest beats polished.*
+*One entry per week, 2 to 3 sentences: pattern · where I applied it · what I delegated to AI · how I verified it.*
 
-> DRAFT written with Claude from what happened in the repo. Rewrite every entry in your own words before HW1: the journal is graded as yours, and you must be able to explain each line.
+**W1 · Context as Budget** · I applied it in the napkin math of our team spec: capping the context at 3 sections and 4,000 characters (about 1,300 prompt tokens) brought the monthly estimate from about $24 down to about $16. I delegated the arithmetic to Claude and checked it by redoing it by hand (1,300 × $0.75 + 200 × $3.75 per million tokens, × 300 requests × 30 days). In HW1 my first token budget was wrong: the model spent 393 of 400 tokens on hidden reasoning, so I learned that reasoning tokens count against the budget too.
 
-## Week 1 · Context as Budget
-Applied it in the spec's napkin math: I first estimated 2,500 prompt tokens per question, then capped context at 3 sections and 4,000 characters (spec AC5), which cut the estimate from about $24 to about $16 a month. Delegated the arithmetic to Claude; verified it by redoing it by hand: 1,300 × $0.75 + 200 × $3.75 per million tokens, × 300 requests × 30 days.
+**W2 · Spec Before Code** · I applied it by upgrading the team spec to v1 and writing the HW1 spec before any code, with acceptance criteria that a test can decide on its own. I delegated the spec critique, the first team slice and the HW1 build to Claude, and checked the work by reading the tests before the code, running `pytest` myself and letting CI catch a real bug (`No module named 'src'`). From the critique we did not take the idea of storing every question in a database, because our spec says no personal data and a question can contain a student's name.
 
-## Week 2 · Spec Before Code
-Applied it by upgrading spec v0 to v1 before any code existed, so each acceptance criterion names the exact status code, field or log line a test checks. Delegated the critique of spec v0 and the build of the first slice (AC1, AC2, AC4) to Claude (Opus 5.5) with a plan-first prompt. Verified by reading `tests/test_ask.py` before `src/`, running `pytest` myself. [Lab 1 drill: name one suggestion from the agent's spec critique that you rejected, and why. Use one you actually rejected; `docs/spec-critique.md` lists what came back.]
+**W3 · Uncertainty-Aware UX** · I applied it by making both features say clearly when they do not know, instead of guessing: CourseMate answers "I can't find that in the course documents" without calling the model, and HW1 reports how many deadlines it `dropped` and says "answer cut off" when the model's reply is incomplete. Claude wrote the code; I verified it with tests that check the exact refusal text and the cut-off error, and I saw the cut-off case happen for real in my first golden run. We have not done the Week 3 multimodal lab yet.
 
-## Week 3 · Uncertainty-Aware UX
-
-## Week 4 · Grounded Generation
+**W4 · Grounded Generation** · I applied it in HW1: the model only sees the course sections that mention deadlines, and my code drops any deadline that does not appear word for word in the section it cites, so the model cannot invent a date. Claude wrote the check; I verified it with a unit test where a fake model invents a date (it gets dropped) and with golden question G2 against the real model, which returned `dropped=0`, 3/3 passed.
