@@ -1,5 +1,5 @@
 import os
-from src.tone_checker import check_emails
+from src.tone_checker import check_email
 
 emails = {
     "G1": {"text": "Send me the report right now. This is completely unacceptable performance.", "expected": "rude"},
