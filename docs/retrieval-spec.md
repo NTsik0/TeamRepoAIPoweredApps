@@ -27,8 +27,8 @@ Not in the corpus, on purpose: grades, Teams posts, exam content and rooms, anyt
 ## 3 · Retrieval
 
 - Embedding model: `openai/text-embedding-3-small` · $0.02 per million tokens (same price as the course reference; re-check on openrouter.ai before trusting a cost figure)
-- Retriever: hybrid, vectors and BM25 merged with Reciprocal Rank Fusion · k = 8 (decision 0002; k = 5 missed the updated HW1 page for a typo question)
-- Refusal threshold: best cosine score 0.25 (starting value; tuned with the golden set, see `docs/decisions/0002-k-equals-8.md`)
+- Retriever: hybrid, vectors and BM25 merged with Reciprocal Rank Fusion · k = 5 (decision 0002: live k = 5 passed 4/5, k = 8 passed 3/5)
+- Refusal threshold: best cosine score 0.25 (starting value; tuned with the golden set, kept after the live run; see `docs/decisions/0002-choosing-k.md`)
 
 ## 4 · Answering
 
@@ -46,7 +46,7 @@ Not in the corpus, on purpose: grades, Teams posts, exam content and rooms, anyt
 
 - AC1 "What is the late penalty for HW1?" returns `answered`, citing `homework/lab-1`, and the answer says "10%"
 - AC2 a question nothing in the corpus matches returns `refused` without a model call (`tests/test_answer.py`)
-- AC3 a reply citing `[12]` when 8 sources were retrieved is refused (`tests/test_answer.py`)
+- AC3 a reply citing a source number that was never retrieved (`[12]`) is refused (`tests/test_answer.py`)
 - AC4 every answer and refusal writes one line to `logs/answers.jsonl` with the reason; every model call writes one line to `logs/usage.jsonl` with tokens, cost and latency
 - AC5 `evals/golden.yaml` passes at 0.70 or above, run live
 

@@ -28,7 +28,7 @@ from src.search import Hit, hybrid
 DEFAULT_MIN_SCORE = {"openai/text-embedding-3-small": 0.25, "offline/trigram-hash": 0.15}
 ANSWER_LOG = Path(os.environ.get("COURSEMATE_ANSWER_LOG", "logs/answers.jsonl"))
 REFUSAL = "I can't answer that from the CS6920 course documents."
-DEFAULT_K = 8   # decision 0002: at k=5 the updated HW1 page fell out of the top chunks
+DEFAULT_K = 5   # decision 0002: live, k=5 passed 4/5 and k=8 passed 3/5
 
 
 def min_score() -> float:
