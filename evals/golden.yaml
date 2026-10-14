@@ -1,0 +1,54 @@
+# KIU CourseMate golden set v1 · Week 4 · five questions from data/corpus
+# Composition for Week 4: 2 factual, 1 reasoning, 1 edge case, 1 refusal.
+# Week 11 grows this to 10 (3 factual, 2 reasoning, 2 edge, 2 refusal, 1 format).
+#
+# expect        answered | refused
+# must_cite     doc ids (path under data/corpus, no .md) that MUST be among the cited sources
+# must_mention  short exact phrases that MUST appear in the answer (case-insensitive)
+# why           one line: what this question protects
+#
+# Never weaken or delete a question to make a run pass. Fix the pipeline, or write down why
+# the question was wrong in a decision record.
+
+threshold: 0.70
+
+items:
+  - id: g1
+    type: factual
+    question: What is the late penalty for HW1?
+    expect: answered
+    must_cite: [homework/lab-1]
+    must_mention: ["10%"]
+    why: a rule with a number; a model happily invents "no late submissions accepted"
+
+  - id: g2
+    type: factual
+    question: How many watch-checks count toward the grade?
+    expect: answered
+    must_cite: [course/overview]
+    must_mention: ["8 of 10"]
+    why: a number that appears in one place only; easy to get wrong from memory
+
+  - id: g3
+    type: reasoning
+    question: Who submits the Design Review team form, and what else is that person responsible for in the repo?
+    expect: answered
+    must_cite: [milestones/design-review, rules/team-repo-guide]
+    must_mention: ["repo keeper"]
+    why: the form rule and the role definition live in two different documents
+
+  - id: g4
+    type: edge
+    question: wen is hw1 due
+    expect: answered
+    must_cite: [milestones/hw1]
+    must_mention: ["20 October"]
+    why: typo, no capitals, and the corpus disagrees with itself (Lab 1 says Week 4 Thursday); the newer date must win
+
+  - id: g5
+    type: refusal
+    question: Which room is the midterm exam in?
+    expect: refused
+    must_cite: []
+    must_mention: []
+    why: the midterm is mentioned ("on campus") but no room is; tempts a confident invented room
