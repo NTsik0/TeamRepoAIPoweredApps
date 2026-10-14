@@ -4,6 +4,7 @@ import json
 import pytest
 
 import deadlines
+import llm
 from deadlines import (MAX_CHARS, MAX_TOKENS, DeadlineError, LLMResult, deadline_sections,
                        find_deadlines, load_sections, main)
 
@@ -118,7 +119,7 @@ def test_ac4_one_usage_line_per_call(log_path):
     lines = log_path.read_text().splitlines()
     assert len(lines) == 2
     entry = json.loads(lines[0])
-    assert set(entry) == {"ts", "course_id", "model", "prompt_tokens", "completion_tokens", "latency_ms"}
+    assert set(entry) == {"ts", "course_id", "model", "prompt_tokens", "completion_tokens", "cost_usd", "latency_ms"}
     assert entry["prompt_tokens"] == 900 and entry["completion_tokens"] == 120
 
 
@@ -161,7 +162,7 @@ def _fake_post(finish_reason, content):
 
 def test_ac5_cut_off_answer_says_so(monkeypatch):
     monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
-    monkeypatch.setattr(deadlines.httpx, "post", _fake_post("length", '{"deadlines": [{'))
+    monkeypatch.setattr(llm.httpx, "post", _fake_post("length", '{"deadlines": [{'))
     with pytest.raises(DeadlineError) as e:
         deadlines.OpenRouterClient().complete([], MAX_TOKENS)
     assert e.value.code == "model_bad_output"
@@ -171,8 +172,24 @@ def test_ac5_cut_off_answer_says_so(monkeypatch):
 def test_ac5_client_sends_cap_and_low_reasoning(monkeypatch):
     monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
     post = _fake_post("stop", json.dumps(GOOD))
-    monkeypatch.setattr(deadlines.httpx, "post", post)
+    monkeypatch.setattr(llm.httpx, "post", post)
     result = deadlines.OpenRouterClient().complete([], MAX_TOKENS)
     assert post.sent["max_tokens"] == 1500
     assert post.sent["reasoning"] == {"effort": "low"}
     assert json.loads(result.text) == GOOD
+
+
+# --- AC4 · Cost is logged from token counts -----------------------------------
+
+def test_ac4_cost_uses_model_prices():
+    # 900 in, 120 out at $0.75 / $3.75 per million tokens
+    assert llm.cost_usd("google/gemini-3.8-flash", 900, 120) == round((900 * 0.75 + 120 * 3.75) / 1e6, 6)
+    assert llm.cost_usd("unknown/model", 900, 120) == 0.0
+
+
+def test_ac4_usage_line_has_cost(log_path):
+    fake = FakeLLM(GOOD)
+    fake.model = "google/gemini-3.8-flash"
+    find_deadlines("cs6920", fake, log_path)
+    entry = json.loads(log_path.read_text().splitlines()[0])
+    assert entry["cost_usd"] == llm.cost_usd("google/gemini-3.8-flash", 900, 120) > 0
