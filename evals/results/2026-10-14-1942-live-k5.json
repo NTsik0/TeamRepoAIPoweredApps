@@ -1,0 +1,110 @@
+{
+ "ts": "2026-10-14T15:42:42+00:00",
+ "mode": "live",
+ "chat_model": "google/gemini-3.8-flash",
+ "embed_model": "openai/text-embedding-3-small",
+ "k": 5,
+ "passed": 4,
+ "total": 5,
+ "pass_rate": 0.8,
+ "threshold": 0.7,
+ "retrieval_rate": 1.0,
+ "items": [
+  {
+   "id": "g1",
+   "type": "factual",
+   "pass": true,
+   "why": [],
+   "retrieved_must_cite": true,
+   "retrieved": [
+    "homework/lab-1",
+    "milestones/hw1",
+    "milestones/hw1",
+    "milestones/hw1",
+    "milestones/hw1"
+   ],
+   "status": "answered",
+   "answer": "The late policy for HW1 is a penalty of minus 10% per 24 hours, up to 72 hours [1].",
+   "cited": [
+    "homework/lab-1"
+   ]
+  },
+  {
+   "id": "g2",
+   "type": "factual",
+   "pass": false,
+   "why": [
+    "expected answered, got refused (model: sources do not answer it)",
+    "did not cite course/overview",
+    "did not mention '8 of 10'"
+   ],
+   "retrieved_must_cite": true,
+   "retrieved": [
+    "course/overview",
+    "milestones/design-review",
+    "rules/team-repo-guide",
+    "rules/team-repo-guide",
+    "rules/team-repo-guide"
+   ],
+   "status": "refused",
+   "answer": "I can't answer that from the CS6920 course documents.",
+   "cited": []
+  },
+  {
+   "id": "g3",
+   "type": "reasoning",
+   "pass": true,
+   "why": [],
+   "retrieved_must_cite": true,
+   "retrieved": [
+    "milestones/design-review",
+    "milestones/design-review",
+    "milestones/design-review",
+    "milestones/design-review",
+    "rules/team-repo-guide"
+   ],
+   "status": "answered",
+   "answer": "The repo keeper submits the Design Review team form [1]. That person owns the repo, including access, settings, branch rules, CI, tags, and making the \"ask first\" changes to `.github/` [5].",
+   "cited": [
+    "milestones/design-review",
+    "rules/team-repo-guide"
+   ]
+  },
+  {
+   "id": "g4",
+   "type": "edge",
+   "pass": true,
+   "why": [],
+   "retrieved_must_cite": true,
+   "retrieved": [
+    "milestones/hw1",
+    "homework/lab-1",
+    "homework/lab-2",
+    "milestones/hw1",
+    "homework/lab-3"
+   ],
+   "status": "answered",
+   "answer": "HW1 (Milestone 1) is due before Week 5 on Tuesday 20 October 2026, 23:59 (Tbilisi time) [1]. The deadline was updated and extended by one week from the original Week 4 date [1].",
+   "cited": [
+    "milestones/hw1"
+   ]
+  },
+  {
+   "id": "g5",
+   "type": "refusal",
+   "pass": true,
+   "why": [],
+   "retrieved_must_cite": true,
+   "retrieved": [
+    "course/overview",
+    "milestones/design-review",
+    "course/overview",
+    "rules/team-repo-guide",
+    "homework/lab-2"
+   ],
+   "status": "refused",
+   "answer": "I can't answer that from the CS6920 course documents.",
+   "cited": []
+  }
+ ]
+}

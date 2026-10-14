@@ -1,0 +1,14 @@
+{
+ "model_calls": 22,
+ "chat_calls": 10,
+ "embed_calls": 12,
+ "requests_logged": 10,
+ "answered": 5,
+ "refused": 5,
+ "total_cost_usd": 0.015861,
+ "avg_chat_cost_usd": 0.001586,
+ "avg_prompt_tokens": 1777,
+ "avg_completion_tokens": 68,
+ "chat_latency_ms_p50": 4746.0,
+ "chat_latency_ms_p95": 14090
+}
