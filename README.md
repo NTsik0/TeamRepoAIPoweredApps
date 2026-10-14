@@ -25,6 +25,11 @@ uvicorn src.app:app --reload
 curl -s localhost:8000/ask/grounded -H 'content-type: application/json' \
   -d '{"question": "When is HW1 due?"}'
 ```
+Deadline from a photo (Week 3):
+```
+curl -s -F image=@tests/images/clean.jpg localhost:8000/deadline/photo
+python -m evals.run_images                            # the four test photos, live; writes evals/results/
+```
 Without a key: `export COURSEMATE_OFFLINE=1` uses stand-in models (tests and CI do this).
 
 ## How it works
