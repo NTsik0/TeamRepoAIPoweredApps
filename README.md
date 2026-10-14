@@ -2,7 +2,7 @@
 
 Answers KIU students' questions about a course (deadlines, grading, policies) from the official course documents, and says so when the answer isn't there. CS6920 capstone · Fall 2026 · KIU CourseMate team · Nikoloz Tsikaridze, Guram Tsiklauri
 
-**Status:** Week 2 · `POST /ask` answers CS6920 questions from the course document, refuses when nothing matches, and logs token usage and latency for every model call.
+**Status:** Week 4 · `POST /ask/grounded` answers questions about CS6920 from 12 course documents, cites the section every sentence came from, and refuses when it cannot. Every model call logs tokens, cost and latency.
 
 ## The problem
 Course information at KIU is spread across syllabi, GitHub READMEs, Teams posts and emails. Students miss deadlines or ask the same question the instructor answered last week, and instructors answer it again.
@@ -16,11 +16,16 @@ export OPENROUTER_API_KEY=...          # your own key, never in a file
 pip install -r requirements.txt && uvicorn src.app:app --reload
 pytest
 ```
-Then ask:
+Grounded answers (Week 4):
 ```
-curl -s localhost:8000/ask -H 'content-type: application/json' \
-  -d '{"course_id": "cs6920", "question": "When is HW1 due?"}'
+python -m src.index                                   # chunk + embed data/corpus/ into data/index/
+python -m evals.run_golden                            # golden set, live; writes evals/results/
+python -m evals.usage_summary                         # cost and latency from logs/
+uvicorn src.app:app --reload
+curl -s localhost:8000/ask/grounded -H 'content-type: application/json' \
+  -d '{"question": "When is HW1 due?"}'
 ```
+Without a key: `export COURSEMATE_OFFLINE=1` uses stand-in models (tests and CI do this).
 
 ## How it works
 1. `src/courses.py` loads `data/courses/<course-id>.md` and splits it into sections at `## ` headings.

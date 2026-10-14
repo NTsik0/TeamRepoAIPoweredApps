@@ -11,7 +11,9 @@ HW1 PR, or an HW2 write-up in `hw2/<username>/`? The reviewer checks only that t
 ## Review (tick only what you actually did)
 - [ ] I read the tests before the code
 - [ ] Every AC in scope has a test that would fail if the feature broke
-- [ ] From Week 4 (Evidence Rule): this feature has at least one test and writes one log entry when it runs
+### Evidence Rule
+- [ ] **Test:** this change adds or updates at least one test that would fail if the feature broke (unit test in `tests/`, golden question in `evals/golden.yaml`, or eval case). Name it: ...
+- [ ] **Log entry:** the running feature writes a line we can read later (usage, cost, latency, or what it decided and why). Where: ...
 - [ ] No test was deleted, skipped, or weakened
 - [ ] No new dependency, or I checked it exists and is the one we meant
 - [ ] No keys, .env, or secrets touched
