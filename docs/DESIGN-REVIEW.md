@@ -6,7 +6,7 @@ Members: Nikoloz Tsikaridze · NTsik0 · repo keeper · Guram Tsiklauri · Gaaa-
 
 **Problem.** Course information at KIU is spread across a course README, a page per lab, a homework page per lab, milestone briefs and Teams posts, and the pages disagree as deadlines move: CS6920's own HW1 deadline is written two different ways across six of its pages. Students miss deadlines or ask the instructor the same question again.
 
-**Users.** KIU students in CS6920 who want one fact fast ("when is HW1 due?", "who submits the Design Review form?"), usually from a phone, and who sometimes have the deadline only as a screenshot or a photo. Secondary: the instructor, who answers fewer repeated questions. Full spec: [`docs/spec.md`](spec.md) · retrieval spec: [`docs/retrieval-spec.md`](retrieval-spec.md) · photo spec: [`docs/multimodal-spec.md`](multimodal-spec.md).
+**Users.** KIU students in CS6920 who want one fact fast ("when is HW1 due?", "who submits the Design Review form?"), usually from a phone, and who sometimes have the deadline only as a screenshot or a photo. Secondary: the instructor, who answers fewer repeated questions. Full spec: [`docs/spec.md`](spec.md) (v2) · retrieval spec: [`docs/retrieval-spec.md`](retrieval-spec.md) · photo spec: [`docs/multimodal-spec.md`](multimodal-spec.md).
 
 | # | Success criterion | Measured by | Today |
 |---|---|---|---|
@@ -69,11 +69,11 @@ flowchart LR
 
 ## 5 · Token budget
 
-From our own usage log: 10 live answers, 22 model calls ([`evals/results/usage-2026-10-14-1942.json`](../evals/results/usage-2026-10-14-1942.json), produced by `python -m evals.usage_summary`).
+From our own usage log: 10 live answers across the two golden runs (5 at k = 8, 5 at k = 5), 22 model calls ([`evals/results/usage-2026-10-14-1942.json`](../evals/results/usage-2026-10-14-1942.json), produced by `python -m evals.usage_summary`).
 
 | Feature | Model | Tokens in / out (average) | Cost per request | Latency | Source |
 |---|---|---|---|---|---|
-| grounded answer | gemini-3.8-flash + embedding | 1,777 / 68 | **$0.0016** | p50 4.7 s · p95 14.1 s | usage summary above |
+| grounded answer | gemini-3.8-flash + embedding | 1,777 / 68 (both runs; k = 5 alone is lower) | **$0.0016** | p50 4.7 s · p95 14.1 s | usage summary above |
 | index the corpus | text-embedding-3-small | 111 chunks, once | under $0.001 | seconds | ingest run |
 | read a photo | gemini-3.8-flash | 2,001 / 155 (median of 4) | **$0.0021** | 4.0 s (median) | the four live photo calls in `logs/usage.jsonl`, 2026-10-14 |
 
