@@ -50,7 +50,7 @@ Sent as a strict JSON schema with the request (`src/deadline_extract.py`) and va
 | File | What it is | What we expect |
 |---|---|---|
 | `clean.jpg` | screenshot of the Lab 4 homework section: HW1 and the Design Review, both "Tuesday 20 October 2026, 23:59" | accepted |
-| `degraded.jpg` | phone photo of the same screen, dark, blurred, tilted | review, with `due_date` hard |
+| `degraded.jpg` | phone photo of the same screen, dark, blurred, tilted | review (predicted `due_date` hard; live, the model read the date but not the item, so `item` is hard) |
 | `ambiguous.jpg` | handwritten, photographed sideways: "HW2 due next tuesday" | confirm, `due_date` flagged `relative_date` |
 | `not-applicable.jpg` | a computer mouse | rejected |
 
@@ -58,7 +58,7 @@ Expected routes are in `evals/images_expected.json`; `python -m evals.run_images
 
 ## 6 · Model and budget
 
-- Model: `google/gemini-3.8-flash` via OpenRouter, the same model as grounded answers; it accepts image input and a JSON schema in `response_format`. Verified by the live run in `evals/results/`.
+- Model: `google/gemini-3.8-flash` via OpenRouter, the same model as grounded answers; it accepts image input and a JSON schema in `response_format`. Verified live on 2026-10-14: all four photos routed as expected (`evals/results/2026-10-14-2009-images.json`).
 - Approximate cost per image at 1024 px: about 1,300 tokens in, 200 out ≈ $0.0017 (to be replaced by the logged number).
 - Expected volume: 50 photos a day → about $2.60 a month.
 
