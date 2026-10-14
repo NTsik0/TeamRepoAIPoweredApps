@@ -1,5 +1,7 @@
 # HW1 Delegation log · Deadline Finder · NTsik0
 
+**Dates:** 2026-10-09 to 2026-10-14 · **Tool:** Claude (Opus 5.5) · **Rung on the Autonomy Ladder:** 3 in name, closer to 4 in practice: the agent planned and built in one run, and I verified the results with tests and golden runs instead of approving a plan and reading every line of the diff first.
+
 **What I delegated.** Spec, code, tests and the golden runner were drafted by Claude (Opus 5.5) in a Claude cloud session, from my request to "do HW1". It had the HW1 brief, the team `AGENTS.md` and spec, and the CS6920 course document. Order of work: spec committed first (commit "HW1: add spec…"), then tests, then code.
 
 **What came back wrong, and how it was caught.**
@@ -8,6 +10,8 @@
 3. *Caught by the golden questions, against the real model:* the first real run failed G1 and G2 with `model_bad_output: model did not return JSON`. Printing the raw answer showed `TOKENS OUT: 393` and only `{"deadlines": [{`. The spec set `max_tokens` to 400 assuming every token is output, but `gemini-3.8-flash` spends completion tokens on hidden reasoning, so the JSON was cut off. Fix: spec first (AC5, success criterion 3, napkin math), then code: `max_tokens` 1,500, reasoning effort `low`, and a cut-off answer (`finish_reason` = `length`) now says "answer cut off" instead of the misleading "did not return JSON". Two new tests cover it; removing the cut-off check makes one fail. Lesson: a failed golden run is a measurement; the cost estimate in v1 was wrong by about 2×.
 4. *During the build, before any real run:* nothing else failed. What was checked: 18 unit tests (20 after fix 3) pass with no key and no network; three deliberate breakages (remove the grounding check, remove the section filter, raise the token cap) each made at least one test fail; the golden runner was dry-run with a fake model in a scratch copy to confirm it writes the table.
 
+5. *Gap found when re-reading the brief on 2026-10-14:* MILESTONE-1 asks that model calls go through an `llm.py` that logs tokens, **cost** and latency. My log had no cost. The model client moved into `src/llm.py`, which now logs `cost_usd` from the token counts; two tests were added, and logging a cost of 0 makes one fail (22 tests pass).
+
 **What was NOT verified by the agent.** The golden questions against the real model: no API key in that session. Results in `golden.md` come only from my run of `run_golden.py`.
 
 **My own checks.**
@@ -15,3 +19,5 @@
 - Ran `run_golden.py` with my key. First attempt failed because I had exported the placeholder text instead of my real key (`HTTPStatusError`); fixed by setting the real key.
 - Real run: 1/3. Instead of accepting it, I printed the raw model output and found the answer was cut off (`TOKENS OUT: 393`, JSON stopped after the first `{`). I gave that to the agent, which fixed spec, code and tests; I pulled the fix and checked tests again (20 passed).
 - Re-ran the golden questions: 3/3.
+
+**What I would change next time.** Work at rung 3 for real: ask for a plan first and approve it before any file is written, and read the diff before running it. Twice the gap was in the spec, not the code (reasoning tokens in the budget, cost in the log); reading the brief line by line before delegating would have caught both.
