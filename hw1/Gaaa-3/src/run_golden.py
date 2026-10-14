@@ -1,5 +1,5 @@
 import os
-from src.tone_checker import check_email
+from src.tone_checker import check_emails
 
 emails = {
     "G1": {"text": "Send me the report right now. This is completely unacceptable performance.", "expected": "rude"},
@@ -10,10 +10,11 @@ results = []
 for tag, data in emails.items():
     try:
         actual = check_email(data["text"]).get("tone")
-        status = "PASS" if actual in [data["expected"], "rude", "neutral"] else "FAIL"
+        status = "PASS" if actual == data["expected"] else "FAIL"
         results.append((tag, data['text'], data['expected'], actual, status))
     except Exception as e:
-        results.append((tag, data['text'], data['expected'], f"ERROR", "FAIL"))
+        print(tag, "error:", e)
+        results.append((tag, data['text'], data['expected'], f"ERROR: {type(e).__name__}", "FAIL"))
 
 with open("golden.md", "w", encoding="utf-8") as f:
     f.write("# HW1 Golden Questions\n\n| # | Input Email | Expected | Actual | Result |\n|---|---|---|---|---|\n")
