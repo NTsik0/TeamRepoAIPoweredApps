@@ -1,0 +1,119 @@
+{
+ "ts": "2026-10-14T14:56:12+00:00",
+ "mode": "offline",
+ "chat_model": "offline/extractive",
+ "embed_model": "offline/trigram-hash",
+ "k": 5,
+ "passed": 2,
+ "total": 5,
+ "pass_rate": 0.4,
+ "threshold": 0.7,
+ "retrieval_rate": 0.8,
+ "items": [
+  {
+   "id": "g1",
+   "type": "factual",
+   "pass": true,
+   "why": [],
+   "retrieved_must_cite": true,
+   "retrieved": [
+    "rules/team-repo-guide",
+    "rules/team-repo-guide",
+    "homework/lab-1",
+    "milestones/hw1",
+    "milestones/hw1"
+   ],
+   "status": "answered",
+   "answer": "**HW1 \u00b7 \"Spec to Ship\" \u00b7 5 points \u00b7 individual** **Due: Thursday of Week 4, 23:59 (Tbilisi time)** **Submit: push to `hw1/<your-github-username>/` in your team repo, then fill the submission form (link on Teams)** **Deliver: a one-page spec, the working feature it describes, 3 golden questions with results, a half-page delegation log, and your Pattern Journal for Weeks 1 to 4** Late policy: minus 10% per 24 hours, up to 72 hours [3]. AI tools: encouraged, and logged [3].",
+   "cited": [
+    "homework/lab-1"
+   ]
+  },
+  {
+   "id": "g2",
+   "type": "factual",
+   "pass": true,
+   "why": [],
+   "retrieved_must_cite": true,
+   "retrieved": [
+    "course/overview",
+    "labs/lab-3",
+    "labs/lab-3",
+    "labs/lab-3",
+    "rules/team-repo-guide"
+   ],
+   "status": "answered",
+   "answer": "- **Before each lab** (from Week 3): a 3-question watch-check on the recording [1]. Two minutes, auto-graded, best 8 of 10 count [1].",
+   "cited": [
+    "course/overview"
+   ]
+  },
+  {
+   "id": "g3",
+   "type": "reasoning",
+   "pass": false,
+   "why": [
+    "did not cite rules/team-repo-guide"
+   ],
+   "retrieved_must_cite": true,
+   "retrieved": [
+    "milestones/design-review",
+    "milestones/design-review",
+    "rules/team-repo-guide",
+    "milestones/design-review",
+    "rules/team-repo-guide"
+   ],
+   "status": "answered",
+   "answer": "Copy `Lab-4/templates/DESIGN-REVIEW.md` to `docs/DESIGN-REVIEW.md` in your team repo [1]. The repo keeper submits the team form (link pinned on Teams): repo link, tag name, every member's name [1]. **Design Review \u00b7 team \u00b7 10 points** **Due: before Week 5 \u00b7 Tuesday 20 October 2026, 23:59 (Tbilisi time)** **Submit: `docs/DESIGN-REVIEW.md` merged to `main` in your team repo, the tag `design-review` on `main`, then one team form submitted by your repo keeper (link on Teams)** **Deliver: four pages at most: problem and users, architecture and data flow, risks and safety threats, evaluation plan with your golden set run, token budget from your logs, team and decisions** **Full brief, template and rubric: `Lab-4/DESIGN-REVIEW.md`** This page is the single source of truth for the Design Review [2]. If any other file says something different, this page wins [2].",
+   "cited": [
+    "milestones/design-review",
+    "milestones/design-review"
+   ]
+  },
+  {
+   "id": "g4",
+   "type": "edge",
+   "pass": false,
+   "why": [
+    "did not cite milestones/hw1",
+    "did not mention '20 October'"
+   ],
+   "retrieved_must_cite": false,
+   "retrieved": [
+    "homework/lab-2",
+    "labs/lab-2",
+    "homework/lab-1",
+    "homework/lab-3",
+    "homework/lab-4"
+   ],
+   "status": "answered",
+   "answer": "**No new homework this week.** Two things are due, and nothing new is graded [1]. HW1 keeps going (unchanged since Lab 1):** **HW1 \u00b7 \"Spec to Ship\" \u00b7 5 points \u00b7 individual** **Due: Thursday of Week 4, 23:59 (Tbilisi time)** **Submit: push to `hw1/<your-github-username>/` in your team repo, then fill the submission form (link on Teams)** **Deliver: a one-page spec, the working feature it describes, 3 golden questions with results, a half-page delegation log, and your Pattern Journal for Weeks 1 to 4** **2 [1]. **No new homework this week.** Two things are due, and nothing new is graded [2]. HW1 keeps going (unchanged since Lab 1):** **HW1 \u00b7 \"Spec to Ship\" \u00b7 5 points \u00b7 individual** **Due: Thursday of Week 4, 23:59 (Tbilisi time)** **Submit: push to `hw1/<your-github-username>/` in your team repo, then fill the submission form (link on Teams)** **Deliver: a one-page spec, the working feature it describes, 3 golden questions with results, a half-page delegation log, and your Pattern Journal for Weeks 1 to 4** **2 [2].",
+   "cited": [
+    "homework/lab-2",
+    "labs/lab-2"
+   ]
+  },
+  {
+   "id": "g5",
+   "type": "refusal",
+   "pass": false,
+   "why": [
+    "expected refused, got answered (no reason)"
+   ],
+   "retrieved_must_cite": true,
+   "retrieved": [
+    "rules/team-repo-guide",
+    "course/overview",
+    "course/overview",
+    "course/overview",
+    "milestones/hw1"
+   ],
+   "status": "answered",
+   "answer": "- **Weeks 8 and 9**: on-campus midterm period, no classes [2]. One exam, and protected capstone build time [2]. | Interim \u00b7 70 \u00b7 minimum 25 | pts | Final \u00b7 30 \u00b7 minimum 16 | pts | |---|---|---|---| | Midterm exam (on campus) | 25 | Demo Day \u00b7 investor pitch, industry judges | 20 | | Design Review \u00b7 W4 | 10 | Repository Review | 10 | | Safety & Evaluation Audit \u00b7 W11 | 10 | | | | Participation: HW1 5 + HW2 5 + watch-checks 3 + peer form 2 | 15 | | | | Quiz 1 \u00b7 W5 + Quiz 2 \u00b7 W12, in lab | 5 + 5 | | | Your capstone is 50 of the 100, across four milestones [4]. Capstone tags, in order: `lab1-spec \u2192 lab2-multimodal \u2192 lab3-rag-goldenset \u2192 lab4-tools-mcp \u2192 lab5-streaming-state \u2192 lab6-agent-loop \u2192 lab7-optimization \u2192 lab8-eval-ci \u2192 lab9-production \u2192 lab10-portability \u2192 lab11-rehearsal \u2192 lab12-demo-day` [4].",
+   "cited": [
+    "course/overview",
+    "course/overview"
+   ]
+  }
+ ]
+}

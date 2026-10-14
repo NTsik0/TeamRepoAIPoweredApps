@@ -8,3 +8,4 @@ node_modules/
 logs/
 secrets/
 .DS_Store
+data/index/

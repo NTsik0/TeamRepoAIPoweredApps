@@ -1,10 +1,14 @@
 """KIU CourseMate API. First slice: AC1, AC2, AC4 (docs/spec.md)."""
 import os
+from functools import lru_cache
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException
-from pydantic import BaseModel
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field
 
+from src import answer as grounded
+from src import index as course_index
 from src.courses import load_course
 from src.llm import LLMClient, OpenRouterClient, call_and_log
 from src.retrieve import retrieve
@@ -73,3 +77,27 @@ def ask(req: AskRequest, llm: LLMClient = Depends(get_llm), log_path: Path = Dep
         return AskResponse(course_id=req.course_id, answer=REFUSAL, found=False, sources=[])
     return AskResponse(course_id=req.course_id, answer=result.text, found=True,
                        sources=[h.title for h in hits])
+
+
+# --- Week 4 · grounded answers over the course documents ---------------------
+
+class GroundedAsk(BaseModel):
+    question: str = Field(min_length=3, max_length=500)
+
+
+@lru_cache(maxsize=1)
+def get_index():
+    return course_index.load()
+
+
+@app.post("/ask/grounded")
+def ask_grounded(body: GroundedAsk):
+    """Answer from data/corpus with citations, or refuse. Build the index first: python -m src.index"""
+    try:
+        idx = get_index()
+    except FileNotFoundError:
+        return JSONResponse(status_code=503, content={"error": {
+            "code": "index_missing", "message": "no index yet: run python -m src.index"}})
+    except course_index.IndexMismatch as e:
+        return JSONResponse(status_code=503, content={"error": {"code": "index_mismatch", "message": str(e)}})
+    return grounded.answer(idx, body.question).to_dict()
