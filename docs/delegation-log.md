@@ -36,3 +36,12 @@ Format:
 - **Decision:** [fill in after review]
 - **AGENTS.md change:** grounding rules added (see AGENTS.md "Never" and conventions).
 - **Cost:** one session; live runs cost $0.016 in total (22 model calls).
+
+### Entry 3 · Lab 3: deadline from a photo
+- **Task:** `docs/multimodal-spec.md` AC1 to AC5 and `docs/confidence-policy.md`. Branch `slice-lab3-deadline-photo`.
+- **Delegated to:** Claude (Opus 5.5), pointed at both docs, `AGENTS.md` and the course reference `Lab-3/examples/poster-extraction/`. Spec and policy were written and committed before the code. The four photos were taken by Nikoloz.
+- **Came back wrong:** (1) the first test for "a guessed date without evidence" used confidence 0.95, so swapping the order of the checks (confidence before evidence) broke nothing: no test protected the policy's "evidence before confidence" rule. Found by deliberately breaking `decide()` four ways; three were caught, this one was not. Added `test_evidence_is_checked_before_confidence` (no evidence and confidence 0.2 must be hard); the mutation now fails. (2) The first clean screenshot candidate showed browser tabs with a teammate's real name; the cropped screenshot was used instead.
+- **Caught by:** mutation check; reading the images before committing them.
+- **Verified:** 77 offline tests pass with no key. Live run by Nikoloz on 2026-10-14 (`evals/results/2026-10-14-2009-images.json`): 4/4 routed as expected. clean → accepted (`2026-10-20`, `23:59`); degraded → review; ambiguous → confirm ("Which date is 'next tuesday'?"); mouse → rejected. One surprise: on the blurred photo the model read the date with evidence but not the item, so `item` (not `due_date`, as the spec predicted) was the hard field. The spec now records what happened.
+- **Decision:** [fill in after review]
+- **AGENTS.md change:** downscale and nullable evidence convention; "Never prefill a low-confidence or unevidenced value".

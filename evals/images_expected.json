@@ -1,0 +1,6 @@
+{
+ "clean.jpg":          {"route": "accepted", "due_date": "2026-10-20"},
+ "degraded.jpg":       {"route": ["review", "confirm"], "never_accept": true},
+ "ambiguous.jpg":      {"route": "confirm", "flag": "relative_date"},
+ "not-applicable.jpg": {"route": "rejected"}
+}

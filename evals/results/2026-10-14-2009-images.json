@@ -1,0 +1,149 @@
+{
+ "ts": "2026-10-14T16:09:28+00:00",
+ "model": "google/gemini-3.8-flash",
+ "today": "2026-10-14",
+ "passed": 4,
+ "total": 4,
+ "items": [
+  {
+   "image": "clean.jpg",
+   "pass": true,
+   "why": [],
+   "route": "accepted",
+   "flags": [],
+   "hard": [],
+   "reasons": [],
+   "extraction": {
+    "item": {
+     "value": "Milestone 1 = HW1 \u00b7 \"Spec to Ship\"",
+     "evidence": "Milestone 1 = HW1 \u00b7 \"Spec to Ship\"",
+     "confidence": 0.95
+    },
+    "due_date": {
+     "value": "2026-10-20",
+     "evidence": "Tuesday 20 October 2026",
+     "confidence": 0.98
+    },
+    "due_time": {
+     "value": "23:59",
+     "evidence": "23:59",
+     "confidence": 0.98
+    },
+    "course": {
+     "value": null,
+     "evidence": null,
+     "confidence": 0.0
+    }
+   }
+  },
+  {
+   "image": "degraded.jpg",
+   "pass": true,
+   "why": [],
+   "route": "review",
+   "flags": [
+    [
+     "missing",
+     "item"
+    ]
+   ],
+   "hard": [
+    "item"
+   ],
+   "reasons": [
+    "What is due: not found on the photo"
+   ],
+   "extraction": {
+    "item": {
+     "value": null,
+     "evidence": null,
+     "confidence": 0.0
+    },
+    "due_date": {
+     "value": "2026-10-20",
+     "evidence": "Tuesday 20 October 2026",
+     "confidence": 0.8
+    },
+    "due_time": {
+     "value": "23:59",
+     "evidence": "23:59",
+     "confidence": 0.85
+    },
+    "course": {
+     "value": null,
+     "evidence": null,
+     "confidence": 0.0
+    }
+   }
+  },
+  {
+   "image": "ambiguous.jpg",
+   "pass": true,
+   "why": [],
+   "route": "confirm",
+   "flags": [
+    [
+     "relative_date",
+     "due_date"
+    ]
+   ],
+   "hard": [],
+   "reasons": [
+    "Which date is 'next tuesday'?"
+   ],
+   "extraction": {
+    "item": {
+     "value": "HW 2",
+     "evidence": "HW 2",
+     "confidence": 0.95
+    },
+    "due_date": {
+     "value": null,
+     "evidence": "next tuesday",
+     "confidence": 0.95
+    },
+    "due_time": {
+     "value": null,
+     "evidence": null,
+     "confidence": 0.0
+    },
+    "course": {
+     "value": null,
+     "evidence": null,
+     "confidence": 0.0
+    }
+   }
+  },
+  {
+   "image": "not-applicable.jpg",
+   "pass": true,
+   "why": [],
+   "route": "rejected",
+   "flags": [],
+   "hard": [],
+   "reasons": [],
+   "extraction": {
+    "item": {
+     "value": null,
+     "evidence": null,
+     "confidence": 0.0
+    },
+    "due_date": {
+     "value": null,
+     "evidence": null,
+     "confidence": 0.0
+    },
+    "due_time": {
+     "value": null,
+     "evidence": null,
+     "confidence": 0.0
+    },
+    "course": {
+     "value": null,
+     "evidence": null,
+     "confidence": 0.0
+    }
+   }
+  }
+ ]
+}

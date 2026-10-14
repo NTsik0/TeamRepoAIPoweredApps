@@ -1,13 +1,16 @@
 """KIU CourseMate API. First slice: AC1, AC2, AC4 (docs/spec.md)."""
 import os
+from datetime import date
 from functools import lru_cache
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
+from PIL import UnidentifiedImageError
+from pydantic import BaseModel, Field, ValidationError
 
 from src import answer as grounded
+from src import deadline_checks, deadline_extract
 from src import index as course_index
 from src.courses import load_course
 from src.llm import LLMClient, OpenRouterClient, call_and_log
@@ -101,3 +104,28 @@ def ask_grounded(body: GroundedAsk):
     except course_index.IndexMismatch as e:
         return JSONResponse(status_code=503, content={"error": {"code": "index_mismatch", "message": str(e)}})
     return grounded.answer(idx, body.question).to_dict()
+
+
+# --- Week 3 · a deadline from a photo (docs/multimodal-spec.md) ----------------
+
+MAX_IMAGE_BYTES = 10 * 1024 * 1024
+
+
+@app.post("/deadline/photo")
+async def deadline_photo(image: UploadFile = File(...)):
+    """Read a deadline from an image and route it: accepted, confirm, review or rejected.
+    Hard fields come back empty (never prefilled with the model's guess)."""
+    data = await image.read()
+    if not data or len(data) > MAX_IMAGE_BYTES:
+        return JSONResponse(status_code=422, content={"error": {
+            "code": "image_size", "message": "send one image between 1 byte and 10 MB"}})
+    try:
+        x = deadline_extract.extract(data)
+    except UnidentifiedImageError:
+        return JSONResponse(status_code=422, content={"error": {
+            "code": "not_an_image", "message": "the upload is not a readable image"}})
+    except ValidationError:
+        return JSONResponse(status_code=502, content={"error": {
+            "code": "model_bad_output", "message": "the model's reply did not match the schema"}})
+    d = deadline_checks.decide(x, today=date.today())
+    return {"route": d.route, "reasons": d.reasons(x), "fields": deadline_checks.for_display(x, d)}
