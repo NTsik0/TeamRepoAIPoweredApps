@@ -105,7 +105,7 @@ def test_ac4_each_model_call_writes_one_usage_line(client, log_path):
     lines = log_path.read_text().splitlines()
     assert len(lines) == 2
     entry = json.loads(lines[0])
-    assert set(entry) == {"ts", "course_id", "model", "prompt_tokens", "completion_tokens", "latency_ms"}
+    assert set(entry) == {"ts", "course_id", "model", "prompt_tokens", "completion_tokens", "cost_usd", "latency_ms"}
     assert entry["course_id"] == "cs6920"
     assert entry["model"] == "fake/model"
     assert entry["prompt_tokens"] == 812
