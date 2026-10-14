@@ -1,4 +1,15 @@
-# Spec v1 · KIU CourseMate
+# Spec v2 · KIU CourseMate
+
+*v2 (Week 4, 2026-10-14) adds grounded answers over 12 course pages and deadlines read from photos. Details: [`retrieval-spec.md`](retrieval-spec.md) (Lab 4) and [`multimodal-spec.md`](multimodal-spec.md) with [`confidence-policy.md`](confidence-policy.md) (Lab 3). The Week 2 sections further down still describe `POST /ask`, which keeps running until it is switched to the grounded pipeline (decision 0003).*
+
+## What changed in v2
+| | v1 (Week 2) | v2 (Weeks 3 and 4) |
+|---|---|---|
+| Documents | one file, `data/courses/cs6920.md` | 12 course pages in `data/corpus/` |
+| Retrieval | keyword overlap, at most 3 sections | hybrid (embeddings + BM25), k = 5 (decision 0002) |
+| Answer | free text | `{answer, citations, grounded}`; every sentence cites `[n]` or the answer is refused |
+| Endpoints | `POST /ask` | plus `POST /ask/grounded` and `POST /deadline/photo` |
+| Usage log | tokens and latency | tokens, cost and latency on every call |
 
 ## Goal
 Answer KIU students' questions about one course (deadlines, grading, policies, schedule) correctly, quickly and cheaply, using only that course's official documents, and say so plainly when the documents don't contain the answer.
@@ -8,10 +19,11 @@ Answer KIU students' questions about one course (deadlines, grading, policies, s
 - **Secondary:** instructors and TAs, who answer fewer repeated questions.
 
 ## Success criteria (measurable)
-1. **Correctness:** at least 9 of 10 golden questions pass (Week 4 set; Week 11 threshold 0.70 as a floor).
+1. **Correctness:** the golden set passes at 0.70 or above, run live (Week 4: 5 questions in `evals/golden.yaml`; Week 11: 10 questions). v1 said "9 of 10"; changed to the course's 0.70 gate in v2.
 2. **Grounding:** 100% of "not in the documents" golden questions return the refusal text, never an invented answer.
 3. **Latency:** p95 end-to-end latency under 3 s, measured from `logs/usage.jsonl`.
-4. **Cost:** average cost per answered question under $0.003, measured from logged token counts.
+4. **Cost:** average cost per answered question under $0.003 and per photo under $0.005, measured from logged token counts.
+5. **Photos:** a field with no evidence on the photo is never accepted; the four test photos route as `evals/images_expected.json` says.
 
 ## Context list
 - `data/courses/<course-id>.md`: the course document, split into sections at `## ` headings. In the repo; humans edit it.
