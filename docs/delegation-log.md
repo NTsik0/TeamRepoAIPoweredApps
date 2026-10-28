@@ -61,3 +61,12 @@ Format:
 - **AGENTS.md change:** two "Never" lines (no identity in tool arguments; no tool that deletes or sends without asking) and a tools convention.
 - **Cost:** one session, 0 live model calls by the agent.
 
+### Entry 5 · HW2 (NTsik0): find_deadlines
+- **Task:** HW2 product pull request: wrap a capstone function as a tool. `find_deadlines` lists every deadline sentence in a course document, quoted word for word. Branch `slice-hw2-NTsik0`.
+- **Delegated to:** Claude (Opus 5.5), pointed at `docs/tool-contracts.md`, `AGENTS.md`, `Lab-5/HOMEWORK.md` and `Lab-5/examples/campuspulse-tools/`. Rung 3: the plan (read-only, no model call, inputs `course`, `about`, `limit`, 5+ golden cases) was approved by Nikoloz on 2026-10-28 before any file was written.
+- **Came back wrong:** the agent first created the branch from a stale local copy of `main` that did not yet contain the merged Lab 5 pull request (#17), so `src/tools.py` and `src/act.py` were missing. Caught before any file was written, because the AGENTS.md it read had no tool rules; the branch was recreated from `origin/main` at `c7767d5`.
+- **Caught by:** reading AGENTS.md at the start of the task and comparing `git log -1` with `origin/main`. Three mutations of the contract, each caught by one golden case: without the `about` pattern, `a2` (instructions in the text field) fails; with `extra="ignore"`, `a3` (another student in the arguments) fails; with `course` as any string, `a1` (`../../.env`) fails.
+- **Verified:** plain `pytest`: 117 passed, with no key and no network, including the 7 cases in `evals/tools/NTsik0.yaml`. [Nikoloz: add the red CI run and the green run here after they happen.]
+- **Decision:** [fill in after review]
+- **Cost:** one session, 0 model calls (the tool does not call a model).
+

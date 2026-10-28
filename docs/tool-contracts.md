@@ -47,6 +47,42 @@
 
 **Log line.** `logs/tools.jsonl`, one line per call: timestamp (UTC), tool, the raw arguments, ok, the error, a 12-character hash of the student id, latency. It leaves out the student id itself and never contains the question text.
 
+## `find_deadlines` · HW2 · NTsik0
+
+**In one sentence, for the model:** List the deadlines in a course document, each quoted word for word with the section it comes from. Reads only.
+
+| | |
+|---|---|
+| **Effect** | reads |
+| **Undo** | nothing to undo |
+| **Idempotent?** | yes: it changes nothing |
+| **Offered to** | everyone, including visitors who are not signed in |
+| **Identity from** | not needed: the answer is the same for every caller. An identity field in the arguments is still refused (`extra="forbid"`) |
+| **Touches** | `data/courses/cs6920.md`, read only, through `load_course()` |
+| **Must never** | state a deadline that is not in the document, or read any other file |
+
+**Inputs.** Unknown fields are refused (`extra="forbid"`).
+
+| Argument | Type | Constraint | Description the model reads |
+|---|---|---|---|
+| `course` | string | one of `cs6920` | The course the deadline belongs to |
+| `about` | string or null | pattern `^[A-Za-z0-9][A-Za-z0-9 -]{1,29}$` (2 to 30 letters, digits, spaces, hyphens), default null | Only deadlines that mention this word, e.g. HW2 or Demo Day |
+| `limit` | integer | 1 to 20, default 10 | The most deadlines to return |
+
+**Result.** `course`, `deadlines` (list of `section`, `quote`), `total` (matches before the limit). No file paths.
+
+**Expected failures**
+
+| When | Message the model reads |
+|---|---|
+| nothing matches `about` | No deadline in the cs6920 document mentions '<about>'. Try a shorter word, like HW2, or leave 'about' out to list every deadline. |
+
+**Known limit.** It quotes the document as written. `data/courses/cs6920.md` still says HW1 was due "Thursday of Week 4"; the extension is in `data/corpus/milestones/hw1.md`, which this tool does not read.
+
+**Tests and golden cases:** `evals/tools/NTsik0.yaml` (7 cases: 3 normal, 1 bad input, 3 adversarial) and `tests/test_find_deadlines.py`.
+
+**Log line.** Same as every tool: `logs/tools.jsonl`, no student id (a visitor has none; a signed-in caller is logged as a hash).
+
 ## HW2 owners
 
 Each member wraps a different capstone function for HW2. Neither is `save_reminder`, the team's Lab 5 tool.

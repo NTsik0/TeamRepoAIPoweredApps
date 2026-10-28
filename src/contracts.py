@@ -23,6 +23,10 @@ Title = Annotated[str, Field(
     description="What is due, as named in the course document, e.g. HW2 Tool Contract")]
 DueDate = Annotated[date, Field(description="The due date, as written in the course document, YYYY-MM-DD")]
 DaysBefore = Annotated[int, Field(ge=1, le=7, description="Remind this many days before the due date, 1 to 7")]
+Keyword = Annotated[str, Field(
+    pattern=r"^[A-Za-z0-9][A-Za-z0-9 -]{1,29}$",
+    description="Only deadlines that mention this word, e.g. HW2 or Demo Day: 2 to 30 letters, digits, spaces or hyphens")]
+Limit = Annotated[int, Field(ge=1, le=20, description="The most deadlines to return, 1 to 20")]
 
 
 class Contract(BaseModel):
@@ -35,3 +39,10 @@ class SaveReminder(Contract):
     title: Title
     due: DueDate
     days_before: DaysBefore = 2
+
+
+class FindDeadlines(Contract):
+    """List the deadlines in a course document, each quoted word for word with the section it comes from. Reads only."""
+    course: CourseId
+    about: Keyword | None = None
+    limit: Limit = 10
