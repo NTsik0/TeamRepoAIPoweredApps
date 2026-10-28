@@ -24,7 +24,7 @@ Title = Annotated[str, Field(
 DueDate = Annotated[date, Field(description="The due date, as written in the course document, YYYY-MM-DD")]
 DaysBefore = Annotated[int, Field(ge=1, le=7, description="Remind this many days before the due date, 1 to 7")]
 Keyword = Annotated[str, Field(
-    pattern=r"^[A-Za-z0-9][A-Za-z0-9 -]{1,29}$",
+    
     description="Only deadlines that mention this word, e.g. HW2 or Demo Day: 2 to 30 letters, digits, spaces or hyphens")]
 Limit = Annotated[int, Field(ge=1, le=20, description="The most deadlines to return, 1 to 20")]
 
