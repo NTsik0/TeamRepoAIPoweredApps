@@ -16,6 +16,7 @@ quality. Run the golden set live before trusting a number.
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 
 import numpy as np
@@ -71,3 +72,49 @@ def complete_json(prompt: str) -> tuple[dict, int, int]:
     out = ({"answer": " ".join(parts), "citations": cited, "grounded": True} if cited else
            {"answer": "The sources do not say.", "citations": [], "grounded": False})
     return out, len(prompt.split()), len(out["answer"].split())
+
+
+# --- Week 5 · a stand-in for function calling ---------------------------------
+
+_DATE = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")
+_REMIND = re.compile(r"remind me (?:about|of|for) (.+?)(?:,| due| on| by)\s", re.I)
+_DAYS = re.compile(r"\b([1-9]) days? before\b", re.I)
+
+
+def _say(result: dict) -> str:
+    if "error" in result:
+        return f"I couldn't do that: {result['error']}"
+    if result.get("status") == "already saved":
+        return f"You already have a reminder for {result['title']} on {result['remind_on']}."
+    return f"Saved: I'll remind you about {result['title']} (due {result['due']}) on {result['remind_on']}."
+
+
+def complete_tools(messages: list[dict], tools: list[dict]) -> tuple[dict, int, int]:
+    """A rule-based stand-in for a tool-calling model: (message, tokens_in, tokens_out).
+    It asks for save_reminder when the question says 'remind me about X due YYYY-MM-DD',
+    and turns tool results into a sentence. It is NOT a model; it never decides anything new."""
+    names = {t["function"]["name"] for t in tools}
+    last_user = max(i for i, m in enumerate(messages) if m["role"] == "user")
+    q = messages[last_user]["content"]
+    results = [json.loads(m["content"]) for m in messages[last_user + 1:] if m["role"] == "tool"]
+    call = None
+    if results:
+        content = " ".join(_say(r) for r in results)
+    else:
+        content = None
+        title, due = _REMIND.search(q + " "), _DATE.search(q)
+        if title and due:
+            if "save_reminder" in names:
+                args = {"course": "cs6920", "title": title.group(1).strip(), "due": due.group(1)}
+                if _DAYS.search(q):
+                    args["days_before"] = int(_DAYS.search(q).group(1))
+                call = ("save_reminder", args)
+            else:
+                content = "Please sign in first: I can only save reminders for a signed-in student."
+        else:
+            content = "I can save a reminder for a course deadline. Tell me what is due and the date."
+    calls = [] if call is None else [{"id": f"call_{len(messages)}", "name": call[0],
+                                      "arguments": json.dumps(call[1])}]
+    out = {"content": content, "tool_calls": calls, "reasoning_details": None}
+    tokens_in = sum(len(str(m.get("content") or "").split()) for m in messages) + 40 * len(tools)
+    return out, tokens_in, len((content or json.dumps(calls)).split())

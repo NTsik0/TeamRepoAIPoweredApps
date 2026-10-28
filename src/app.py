@@ -1,14 +1,17 @@
 """KIU CourseMate API. First slice: AC1, AC2, AC4 (docs/spec.md)."""
 import os
+import re
 from datetime import date
 from functools import lru_cache
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
+import httpx
+from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 from PIL import UnidentifiedImageError
 from pydantic import BaseModel, Field, ValidationError
 
+from src import act as tool_use
 from src import answer as grounded
 from src import deadline_checks, deadline_extract
 from src import index as course_index
@@ -129,3 +132,27 @@ async def deadline_photo(image: UploadFile = File(...)):
             "code": "model_bad_output", "message": "the model's reply did not match the schema"}})
     d = deadline_checks.decide(x, today=date.today())
     return {"route": d.route, "reasons": d.reasons(x), "fields": deadline_checks.for_display(x, d)}
+
+
+# --- Week 5 · tool use (docs/tool-contracts.md) --------------------------------
+
+STUDENT_ID = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
+
+
+class ActRequest(BaseModel):
+    question: str = Field(min_length=3, max_length=500)
+
+
+@app.post("/act")
+def act_endpoint(body: ActRequest, x_student_id: str | None = Header(default=None)):
+    """Let the model ask for a tool. The caller comes from the X-Student-Id header (a stand-in
+    for real sign-in until Week 12): the model never sees it and cannot change it.
+    No header: a visitor, offered no tools that write."""
+    if x_student_id is not None and not STUDENT_ID.match(x_student_id):
+        return JSONResponse(status_code=400, content={"error": {
+            "code": "bad_student_id", "message": "X-Student-Id must be 1 to 64 letters, digits, '.', '_' or '-'"}})
+    try:
+        return tool_use.act(body.question, student=x_student_id).to_dict()
+    except (httpx.HTTPError, RuntimeError) as e:
+        return JSONResponse(status_code=502, content={"error": {
+            "code": "model_unavailable", "message": f"the model call failed: {type(e).__name__}"}})
