@@ -1,6 +1,6 @@
 """CourseMate's tools: the code that acts, behind the contracts in src/contracts.py (Week 5).
 
-One tool today, save_reminder, and it only adds. Nothing here deletes, edits another student's
+Two tools: save_reminder (Lab 5) only adds; find_deadlines (HW2, NTsik0) only reads. Nothing here deletes, edits another student's
 data, or sends a message: that is the least-privilege decision, made by what we chose NOT to build.
 
 Every tool takes a validated contract object (never raw model output) and returns a pydantic
@@ -15,6 +15,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -23,7 +24,8 @@ from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel
 
-from src.contracts import Contract, SaveReminder
+from src.contracts import Contract, FindDeadlines, SaveReminder
+from src.courses import load_course
 
 TBILISI = ZoneInfo("Asia/Tbilisi")
 MAX_REMINDERS = 50          # per student
@@ -94,6 +96,43 @@ def save_reminder(args: SaveReminder, *, student: str) -> ReminderResult:
                           status="saved", reminders=len(mine))
 
 
+# ---------------------------------------------------------------- find_deadlines
+
+_DEADLINE = re.compile(r"\bdue\b|\bdeadline\b|23:59", re.IGNORECASE)
+_SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
+
+
+class Deadline(BaseModel):
+    section: str               # the '## ' heading the sentence is under
+    quote: str                 # the sentence, word for word (line breaks become spaces)
+
+
+class DeadlineList(BaseModel):
+    course: str
+    deadlines: list[Deadline]
+    total: int                 # how many matched, before the limit
+
+
+def find_deadlines(args: FindDeadlines) -> DeadlineList:
+    """Every sentence in data/courses/<course>.md that states a deadline. No model: the quotes
+    are copied from the document, so a date cannot be invented."""
+    sections = load_course(args.course)
+    if not sections:
+        raise ToolFailure(f"There is no course document for {args.course}. Nothing was looked up.")
+    found = []
+    for s in sections:
+        for sentence in _SENTENCE_END.split(" ".join(s.text.split())):
+            if not _DEADLINE.search(sentence):
+                continue
+            if args.about and args.about.casefold() not in f"{s.title} {sentence}".casefold():
+                continue
+            found.append(Deadline(section=s.title, quote=sentence))
+    if not found:
+        raise ToolFailure(f"No deadline in the {args.course} document mentions '{args.about}'. "
+                          "Try a shorter word, like HW2, or leave 'about' out to list every deadline.")
+    return DeadlineList(course=args.course, deadlines=found[:args.limit], total=len(found))
+
+
 # ---------------------------------------------------------------- the registry
 
 @dataclass(frozen=True)
@@ -112,6 +151,7 @@ class Tool:
 
 TOOLS = {t.name: t for t in [
     Tool("save_reminder", SaveReminder, save_reminder, writes=True),
+    Tool("find_deadlines", FindDeadlines, find_deadlines),
 ]}
 
 

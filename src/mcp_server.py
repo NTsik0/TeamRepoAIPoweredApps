@@ -20,9 +20,10 @@ from mcp.server.mcpserver.exceptions import ToolError
 from mcp.types import ToolAnnotations
 
 from src import tools
-from src.contracts import CourseId, DaysBefore, DueDate, SaveReminder, Title
+from src.contracts import CourseId, DaysBefore, DueDate, FindDeadlines, Keyword, Limit, SaveReminder, Title
 
-mcp = MCPServer("coursemate", instructions="KIU CS6920 course assistant: save reminders for course deadlines.")
+mcp = MCPServer("coursemate", instructions="KIU CS6920 course assistant: find course deadlines and save reminders for them.")
+READS = ToolAnnotations(read_only_hint=True, open_world_hint=False)
 ADDS = ToolAnnotations(read_only_hint=False, destructive_hint=False, idempotent_hint=True, open_world_hint=False)
 
 
@@ -47,6 +48,12 @@ def save_reminder(course: CourseId, title: Title, due: DueDate,
                   days_before: DaysBefore = 2) -> tools.ReminderResult:
     return _run(tools.save_reminder,
                 SaveReminder(course=course, title=title, due=due, days_before=days_before), student=student)
+
+
+
+@mcp.tool(annotations=READS, description=FindDeadlines.__doc__)
+def find_deadlines(course: CourseId, about: Keyword | None = None, limit: Limit = 10) -> tools.DeadlineList:
+    return _run(tools.find_deadlines, FindDeadlines(course=course, about=about, limit=limit))
 
 
 if __name__ == "__main__":
