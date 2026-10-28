@@ -187,3 +187,29 @@ def embed(texts: list[str]) -> np.ndarray:
 def embed_model_name() -> str:
     """The model the index was (or will be) built with. Index and queries must match."""
     return offline.MODEL if OFFLINE else EMBED_MODEL
+
+
+# --- Week 5 · function calling -----------------------------------------------
+
+def complete_tools(messages: list[dict], tools: list[dict], max_tokens: int = 1500) -> dict:
+    """One model turn that may ask for tools. Returns {content, tool_calls, reasoning_details};
+    each tool call is {id, name, arguments (a JSON string)}. Logged like every other call.
+    The model only ASKS for a tool: src/act.py decides whether it runs."""
+    if OFFLINE:
+        t0 = time.perf_counter()
+        msg, tokens_in, tokens_out = offline.complete_tools(messages, tools)
+        log_usage(offline.MODEL, tokens_in, tokens_out, _ms(t0), kind="tools")
+        return msg
+    body = {"model": CHAT_MODEL, "messages": messages, "tools": tools, "tool_choice": "auto",
+            "temperature": 0, "max_tokens": max_tokens, "reasoning": {"effort": "low"}}
+    t0 = time.perf_counter()
+    r = httpx.post(OPENROUTER_URL, headers={"Authorization": f"Bearer {_key()}"}, json=body, timeout=60)
+    r.raise_for_status()
+    data = r.json()
+    usage = data.get("usage") or {}
+    log_usage(data.get("model") or CHAT_MODEL, int(usage.get("prompt_tokens", 0)),
+              int(usage.get("completion_tokens", 0)), _ms(t0), kind="tools")
+    m = data["choices"][0]["message"]
+    calls = [{"id": c["id"], "name": c["function"]["name"], "arguments": c["function"].get("arguments") or "{}"}
+             for c in (m.get("tool_calls") or [])]
+    return {"content": m.get("content"), "tool_calls": calls, "reasoning_details": m.get("reasoning_details")}

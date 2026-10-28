@@ -45,3 +45,19 @@ Format:
 - **Verified:** 77 offline tests pass with no key. Live run by Nikoloz on 2026-10-14 (`evals/results/2026-10-14-2009-images.json`): 4/4 routed as expected. clean → accepted (`2026-10-20`, `23:59`); degraded → review; ambiguous → confirm ("Which date is 'next tuesday'?"); mouse → rejected. One surprise: on the blurred photo the model read the date with evidence but not the item, so `item` (not `due_date`, as the spec predicted) was the hard field. The spec now records what happened.
 - **Decision:** [fill in after review]
 - **AGENTS.md change:** downscale and nullable evidence convention; "Never prefill a low-confidence or unevidenced value".
+
+### Entry 4 · Lab 5: the tool contract
+- **Task:** Lab 5 Parts 1 to 3 and the studio: `docs/tool-contracts.md` for `save_reminder`, the contract class, the tool, `call_tool()` with the three gates, the loop, `complete_tools()` in `llm.py`, `POST /act`, the MCP server, tests, `tests/test_tool_golden.py` and `evals/tools/`. Branch `slice-lab5-tools-mcp`.
+- **Delegated to:** Claude (Opus 5.5), pointed at `docs/tool-contracts.md`, `AGENTS.md` and `Lab-5/examples/campuspulse-tools/`. Rung 3: the plan (tool choice, files, the `mcp>=2.3` dependency, HW2 owners) was proposed first and approved by Nikoloz on 2026-10-28 before any file was written. The two lines the agent had to follow: arguments are validated against the contract before the tool runs, a failure goes back to the model as an error and nothing runs; the caller's identity is never a tool argument.
+- **Came back wrong:** (1) the agent first added a line to the module docstring of `llm.py`, although the lab says nothing else in that file changes; reverted, so the `llm.py` diff only adds `complete_tools()`. (2) The installed MCP SDK was 2.2.0, below the `mcp>=2.3` the lab requires; upgraded before running the tests, so the tests ran on the version in `requirements.txt`.
+- **Caught by:** reading the `llm.py` diff for removed lines; checking `importlib.metadata.version("mcp")`. Two mutations of the contract: with `extra="ignore"` instead of `"forbid"`, `test_model_cannot_choose_the_student` fails; without the `title` pattern, `test_invalid_arguments_never_reach_the_tool` fails. Both restored.
+- **Verified:** 103 offline tests pass with no key (1 skipped: `tests/test_tool_golden.py` has no cases until HW2 adds `evals/tools/<username>.yaml`). Live check by Nikoloz on 2026-10-28 (`POST /act`, `X-Student-Id: nikoloz`, google/gemini-3.8-flash): "Remind me about HW2 Tool Contract due 2026-11-08, 3 days before". The model's first call sent `course: "CS6920"`; the contract refused it before the tool ran (`invalid arguments: course: Input should be 'cs6920'`). The model read the error, called again with `cs6920`, and the reminder was saved (`remind_on` 2026-11-05). The same question a second time returned `already saved` with 1 reminder: idempotent. Both lines from `logs/tools.jsonl` (14:54 UTC run):
+  ```
+  {"ts": "2026-10-28T14:54:22+00:00", "tool": "save_reminder", "ok": false, "error": "invalid arguments: course: Input should be 'cs6920'", "student": "02f053fefa08", "latency_ms": 0}
+  {"ts": "2026-10-28T14:54:25+00:00", "tool": "save_reminder", "ok": true, "error": null, "student": "02f053fefa08", "latency_ms": 7}
+  ```
+  (arguments left out here for length; the full lines are in the log.) The student is stored and logged only as a hash.
+- **Decision:** [fill in after review]
+- **AGENTS.md change:** two "Never" lines (no identity in tool arguments; no tool that deletes or sends without asking) and a tools convention.
+- **Cost:** one session, 0 live model calls by the agent.
+
