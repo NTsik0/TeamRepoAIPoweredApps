@@ -152,7 +152,7 @@ class Section(BaseModel):
 
 class SectionList(BaseModel):
     course: str
-    sources: list[str]        # the document ids in rank order: what a citation line is built from
+    sources: list[str]        # the distinct documents behind the sections, in rank order: a citation line
     sections: list[Section]
 
 
@@ -184,7 +184,7 @@ def search_course_docs(args: SearchCourseDocs) -> SectionList:
                           "question in the words the course uses, like 'Design Review points' or 'HW2 deadline'.")
     return SectionList(
         course=args.course,
-        sources=[h.chunk.doc_id for h in hits],
+        sources=list(dict.fromkeys(h.chunk.doc_id for h in hits)),   # distinct, first mention wins
         sections=[Section(source=h.chunk.doc_id, heading=h.chunk.section, text=clip(h.chunk.text)) for h in hits])
 
 

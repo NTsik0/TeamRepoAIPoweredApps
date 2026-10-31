@@ -13,7 +13,7 @@ cases:
     expect: ok
     result_has:
       course: cs6920
-      sources: [milestones/design-review, milestones/design-review, homework/lab-4]
+      sources: [milestones/design-review, homework/lab-4]      # two sections share a document; sources is distinct
   - id: g2
     type: normal
     why: a signed-in student, k left out, so the default of 3 applies; all three sections come from the HW1 milestone page
@@ -22,7 +22,7 @@ cases:
     arguments: {course: cs6920, question: "What do I hand in for HW1?"}
     expect: ok
     result_has:
-      sources: [milestones/hw1, milestones/hw1, milestones/hw1]
+      sources: [milestones/hw1]      # all three sections come from one document
   - id: g3
     type: normal
     why: an off-topic question scores below the relevance floor, so the tool refuses instead of returning its least bad match
@@ -31,6 +31,15 @@ cases:
     arguments: {course: cs6920, question: "Where can I buy a bicycle in Kutaisi?", k: 3}
     expect: refused
     error_has: [nothing in the cs6920 course documents matched, ask a shorter question]
+  - id: g4
+    type: normal
+    why: a real student question with a slash and a percent sign, from NTsik0's review of #22; these used to be refused before the tool ran
+    tool: search_course_docs
+    caller: null
+    arguments: {course: cs6920, question: "Is the Lab 3/4 homework graded?", k: 3}
+    expect: ok
+    result_has:
+      sources: [labs/lab-2, homework/lab-3, homework/lab-2]
   - id: b1
     type: bad-input
     why: a k out of range never reaches the tool, so one call can never pull most of the corpus into the model's context
