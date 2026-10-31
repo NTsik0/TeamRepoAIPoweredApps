@@ -1,23 +1,27 @@
 """KIU CourseMate API. First slice: AC1, AC2, AC4 (docs/spec.md)."""
+import json
 import os
 import re
+from contextlib import asynccontextmanager
 from datetime import date
 from functools import lru_cache
 from pathlib import Path
 
 import httpx
 from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from PIL import UnidentifiedImageError
 from pydantic import BaseModel, Field, ValidationError
 
 from src import act as tool_use
 from src import answer as grounded
-from src import deadline_checks, deadline_extract
+from src import deadline_checks, deadline_extract, memory
 from src import index as course_index
+from src.chat import FORGET_PATH, chat_turn
 from src.courses import load_course
 from src.llm import LLMClient, OpenRouterClient, call_and_log
 from src.retrieve import retrieve
+from src.tools import student_key
 
 REFUSAL = "I can't find that in the course documents."
 MAX_TOKENS = 300
@@ -30,7 +34,16 @@ SYSTEM_PROMPT = (
     "If the sections do not contain the answer, reply with exactly: " + REFUSAL
 )
 
-app = FastAPI(title="KIU CourseMate")
+STATIC = Path(__file__).resolve().parents[1] / "static"
+
+
+@asynccontextmanager
+async def lifespan(_app):
+    memory.expire()                      # lifetimes are enforced, not only declared (docs/state-contract.md)
+    yield
+
+
+app = FastAPI(title="KIU CourseMate", lifespan=lifespan)
 
 
 class AskRequest(BaseModel):
@@ -156,3 +169,65 @@ def act_endpoint(body: ActRequest, x_student_id: str | None = Header(default=Non
     except (httpx.HTTPError, RuntimeError) as e:
         return JSONResponse(status_code=502, content={"error": {
             "code": "model_unavailable", "message": f"the model call failed: {type(e).__name__}"}})
+
+
+# --- Week 6 · streaming chat and session state (docs/state-contract.md) -------------
+
+SESSION_ID = re.compile(r"^[A-Za-z0-9-]{8,64}$")
+
+
+def bad_header(student: str | None, session: str | None) -> JSONResponse | None:
+    if student is not None and not STUDENT_ID.match(student):
+        return JSONResponse(status_code=400, content={"error": {
+            "code": "bad_student_id", "message": "X-Student-Id must be 1 to 64 letters, digits, '.', '_' or '-'"}})
+    if session is not None and not SESSION_ID.match(session):
+        return JSONResponse(status_code=400, content={"error": {
+            "code": "bad_session_id", "message": "X-Session-Id must be 8 to 64 letters, digits or '-'"}})
+    return None
+
+
+def sse(events) -> StreamingResponse:
+    """Server-Sent Events: one 'event:' line, one 'data:' line, a blank line."""
+    def gen():
+        try:
+            for kind, payload in events:
+                data = json.dumps({"text": payload} if kind == "token" else payload)
+                yield f"event: {kind}\ndata: {data}\n\n"
+        except (httpx.HTTPError, RuntimeError) as e:     # the stream has started: report in-band
+            err = {"code": "model_unavailable", "message": f"the model call failed: {type(e).__name__}"}
+            yield f"event: error\ndata: {json.dumps({'error': err})}\n\n"
+    return StreamingResponse(gen(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+@app.get("/")
+def home():
+    return FileResponse(STATIC / "index.html")
+
+
+@app.post("/chat")
+def chat(body: ActRequest, x_session_id: str | None = Header(default=None),
+         x_student_id: str | None = Header(default=None)):
+    """Stream one turn as SSE: token events, a tool event if a tool ran, then done (ttft, tokens, cost).
+    The session and the student come from headers (stand-ins for real sign-in until Week 12)."""
+    return bad_header(x_student_id, x_session_id) or sse(chat_turn(body.question, x_session_id, x_student_id))
+
+
+@app.get("/me/memory")
+def my_memory(x_session_id: str | None = Header(default=None), x_student_id: str | None = Header(default=None)):
+    """What CourseMate holds about this caller, and how long it keeps it."""
+    if (err := bad_header(x_student_id, x_session_id)):
+        return err
+    mine = memory.reminders(student_key(x_student_id)) if x_student_id else []
+    return {"reminders": [r.__dict__ for r in mine],
+            "recent_turns": len(memory.recent_turns(x_session_id)) if x_session_id else 0,
+            "lifetimes": {"turns": "24 hours", "reminders": "until the day after the due date"},
+            "delete_with": FORGET_PATH}
+
+
+@app.delete("/me/memory")
+def forget_me(x_session_id: str | None = Header(default=None), x_student_id: str | None = Header(default=None)):
+    """Forget me: deletes this student's reminders and this session's turns, now. No model involved."""
+    if (err := bad_header(x_student_id, x_session_id)):
+        return err
+    return memory.forget(student_key(x_student_id) if x_student_id else None, x_session_id).to_dict()

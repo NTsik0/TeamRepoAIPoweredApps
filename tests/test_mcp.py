@@ -1,12 +1,21 @@
 """The MCP door: same contract, annotations, identity from the server, in-memory client (Week 5).
 The both-doors tests are copied from Lab-5/examples/campuspulse-tools/tests/test_mcp.py."""
 import asyncio
+import sqlite3
 
 import pytest
 from mcp import Client
 
-from src import tools
+from src import memory, tools
 from src.mcp_server import mcp
+
+
+def stored_text() -> str:
+    """Every key and value in the memory store, raw: what is really on disk."""
+    if not memory.db_path().exists():
+        return ""
+    with sqlite3.connect(memory.db_path()) as c:
+        return "\n".join(f"{k} {v}" for k, v in c.execute("SELECT key, value FROM memory"))
 
 
 def run(coro):
@@ -69,7 +78,7 @@ def test_student_comes_from_the_server_not_the_model(monkeypatch):
     assert "student" not in run(listed())["save_reminder"].input_schema["properties"]
     r = run(call("save_reminder", {**GOOD, "student": "s999"}))
     assert not r.is_error and r.structured_content["status"] == "saved"
-    stored = tools._state_file().read_text()
+    stored = stored_text()
     assert tools.student_key("s123") in stored and tools.student_key("s999") not in stored
 
 

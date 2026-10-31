@@ -8,13 +8,12 @@ Every tool takes a validated contract object (never raw model output) and return
 result. A failure we expected raises ToolFailure with a message written for the model to read
 and act on. Anything else is a bug and is allowed to crash.
 
-Reminders are written to $COURSEMATE_STATE_DIR/reminders.json (default state/), keyed by a
-hash of the student id, never the id itself.
+Reminders live in the Week 6 memory store (src/memory.py, docs/state-contract.md), keyed by a
+hash of the student id, never the id itself, and expire the day after their due date.
 """
 from __future__ import annotations
 
 import hashlib
-import json
 import os
 import re
 from dataclasses import dataclass
@@ -28,13 +27,14 @@ from pydantic import BaseModel
 
 from src import answer as grounded
 from src import index as course_index
+from src import memory
 from src.chunk import load_corpus
 from src.contracts import Contract, FindDeadlines, SaveReminder, SearchCourseDocs
 from src.courses import load_course
 from src.search import hybrid
 
 TBILISI = ZoneInfo("Asia/Tbilisi")
-MAX_REMINDERS = 50          # per student
+MAX_REMINDERS = memory.MAX_REMINDERS   # per student, enforced in src/memory.py
 MAX_DAYS_AHEAD = 180        # about one semester
 CORPUS = Path("data/corpus")
 MAX_SECTION_CHARS = 600     # about 150 tokens: enough to answer from, small enough for three of them
@@ -53,10 +53,6 @@ def today() -> date:
 def student_key(student: str) -> str:
     """We store and log a hash of the student id, not the id itself."""
     return hashlib.sha256(student.encode()).hexdigest()[:12]
-
-
-def _state_file() -> Path:
-    return Path(os.environ.get("COURSEMATE_STATE_DIR", "state")) / "reminders.json"
 
 
 # ---------------------------------------------------------------- results
@@ -81,27 +77,20 @@ def save_reminder(args: SaveReminder, *, student: str) -> ReminderResult:
         raise ToolFailure(f"{args.due.isoformat()} is more than {MAX_DAYS_AHEAD} days away, outside this "
                           "semester. Check the date in the course document.")
 
-    path = _state_file()
-    state = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
-    mine = state.setdefault(student_key(student), [])
     remind_on = max(now, args.due - timedelta(days=args.days_before))
-
-    same = [r for r in mine if r["course"] == args.course and r["due"] == args.due.isoformat()
-            and r["title"].casefold() == args.title.casefold()]
-    if same:
-        r = same[0]
-        return ReminderResult(course=r["course"], title=r["title"], due=date.fromisoformat(r["due"]),
-                              remind_on=date.fromisoformat(r["remind_on"]), status="already saved",
-                              reminders=len(mine))
-    if len(mine) >= MAX_REMINDERS:
+    key = student_key(student)
+    try:
+        status, count = memory.add_reminder(key, memory.Reminder(
+            course=args.course, title=args.title, due=args.due.isoformat(), remind_on=remind_on.isoformat()))
+    except OverflowError:
         raise ToolFailure(f"You already have {MAX_REMINDERS} saved reminders, the most allowed. Nothing was saved.")
-
-    mine.append({"course": args.course, "title": args.title, "due": args.due.isoformat(),
-                 "remind_on": remind_on.isoformat()})
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(state, indent=2), encoding="utf-8")
+    if status == "already saved":
+        stored = next(r for r in memory.reminders(key) if r.course == args.course and r.due == args.due.isoformat()
+                      and r.title.casefold() == args.title.casefold())
+        return ReminderResult(course=stored.course, title=stored.title, due=args.due,
+                              remind_on=date.fromisoformat(stored.remind_on), status=status, reminders=count)
     return ReminderResult(course=args.course, title=args.title, due=args.due, remind_on=remind_on,
-                          status="saved", reminders=len(mine))
+                          status=status, reminders=count)
 
 
 # ---------------------------------------------------------------- find_deadlines

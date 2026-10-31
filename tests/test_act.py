@@ -2,15 +2,24 @@
 Today is pinned to 2026-10-28 in conftest.py."""
 import json
 import os
+import sqlite3
 
 from fastapi.testclient import TestClient
 
-from src import tools
+from src import memory, tools
 from src.act import MAX_ROUNDS, act, call_tool
 from src.app import app
 from src.tools import tools_for
 
 GOOD = {"course": "cs6920", "title": "HW2 Tool Contract", "due": "2026-11-08"}
+
+
+def stored_text() -> str:
+    """Every key and value in the memory store, raw: what is really on disk."""
+    if not memory.db_path().exists():
+        return ""
+    with sqlite3.connect(memory.db_path()) as c:
+        return "\n".join(f"{k} {v}" for k, v in c.execute("SELECT key, value FROM memory"))
 
 
 def call(name, **args):
@@ -38,7 +47,7 @@ def test_invalid_arguments_never_reach_the_tool(monkeypatch):
 def test_a_tool_not_offered_is_not_run():
     out = call_tool(call("save_reminder", **GOOD), tools_for(None), None)
     assert not out["ok"] and "no tool named 'save_reminder'" in out["error"]
-    assert not tools._state_file().exists()
+    assert stored_text() == ""
 
 
 def test_a_tool_that_does_not_exist_is_not_run():
@@ -49,7 +58,7 @@ def test_a_tool_that_does_not_exist_is_not_run():
 def test_model_cannot_choose_the_student():
     out = call_tool(call("save_reminder", **GOOD, student="s999"), tools_for("s123"), "s123")
     assert not out["ok"] and "student" in out["error"]
-    assert not tools._state_file().exists()
+    assert stored_text() == ""
 
 
 def test_visitors_are_offered_no_write_tools():
@@ -73,7 +82,7 @@ def test_a_past_deadline_is_an_expected_failure_the_model_can_read():
 
 def test_reminders_are_stored_under_a_hash_not_the_student_id():
     call_tool(call("save_reminder", **GOOD), tools_for("s123"), "s123")
-    stored = tools._state_file().read_text()
+    stored = stored_text()
     assert "s123" not in stored and tools.student_key("s123") in stored
 
 
@@ -146,7 +155,7 @@ def test_act_endpoint_takes_the_student_from_the_header_only():
     r = c.post("/act", json={"question": "Remind me about HW2 Tool Contract due 2026-11-08"},
                headers={"X-Student-Id": "s123"})
     assert r.status_code == 200 and r.json()["calls"][0]["ok"]
-    stored = tools._state_file().read_text()
+    stored = stored_text()
     assert tools.student_key("s123") in stored
 
 
