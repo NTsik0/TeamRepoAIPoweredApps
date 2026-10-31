@@ -1,6 +1,6 @@
 # HW2 · Evidence · `search_course_docs` · Gaaa-3
 
-> **Still to fill in before submitting:** the two green Actions run links (on pull request #22, and on `main` after the merge), both marked `FILL`.
+> **Still to write:** the Week 7 journal entry, after the lecture on 5 November 2026.
 
 ## The golden cases
 
@@ -37,7 +37,7 @@ Branch `hw2-Gaaa-3-red` is one commit on top of `slice-hw2-Gaaa-3`: it removes t
 
 Product pull request [#22](https://github.com/NTsik0/TeamRepoAIPoweredApps/pull/22), branch `slice-hw2-Gaaa-3`, approved by NTsik0 and squash-merged on 31 October 2026.
 
-- Green run on the pull request: FILL (Actions run link)
-- Green run on `main` after the merge: FILL (Actions run link)
+- Green run on the pull request, on the reviewed code: https://github.com/NTsik0/TeamRepoAIPoweredApps/actions/runs/41226467272
+- Green run on `main` after the squash merge (`2060279`): https://github.com/NTsik0/TeamRepoAIPoweredApps/actions/runs/41227518786
 
 Plain `pytest` on `slice-hw2-Gaaa-3`: **133 passed**, with no key and no network, including all seven cases in `evals/tools/Gaaa-3.yaml`. (Baseline on `main` before the slice: 117 passed.)
