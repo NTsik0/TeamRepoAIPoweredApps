@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 
 from src import memory
 from src.app import app
-from src.chat import build_messages, chat_turn
+from src.chat import CHAT_ROUNDS, build_messages, chat_turn
 from src.llm import stream
 from src.tools import student_key
 
@@ -130,3 +130,50 @@ def test_bad_headers_are_refused_with_the_error_shape():
     assert r.status_code == 400 and r.json()["error"]["code"] == "bad_session_id"
     r = c.post("/chat", json={"question": "hello there"}, headers={"X-Student-Id": "a b"})
     assert r.status_code == 400 and r.json()["error"]["code"] == "bad_student_id"
+
+
+# ---------------------------------------------------------------- the round budget (live bug, 2026-10-31)
+
+class FakeStream:
+    """A stand-in for llm.Stream: optional text pieces, optional tool calls, no network."""
+
+    def __init__(self, text: str = "", tool_calls: list | None = None):
+        self.pieces = text.split(" ") if text else []
+        self.text, self.tool_calls, self.reasoning_details = "", tool_calls or [], None
+        self.ttft_ms, self.tokens_in, self.tokens_out, self.model = None, 10, 5, "offline/trigram-hash"
+
+    def __iter__(self):
+        for i, p in enumerate(self.pieces):
+            piece = p + (" " if i < len(self.pieces) - 1 else "")
+            self.ttft_ms = 1 if self.ttft_ms is None else self.ttft_ms
+            self.text += piece
+            yield piece
+
+
+def tool_call(name: str, **args) -> dict:
+    return {"id": f"c-{name}", "name": name, "arguments": json.dumps(args)}
+
+
+def test_the_turn_lets_the_model_repair_over_several_rounds_like_act():
+    """Live on 2026-10-31 the model sent course 'CS6920' twice; with one repair round the turn ended
+    with no text and the page waited forever. Two refusals, then a valid call, then the answer."""
+    script = iter([
+        FakeStream(tool_calls=[tool_call("find_deadlines", course="CS6920", about="HW2")]),
+        FakeStream(tool_calls=[tool_call("find_deadlines", course="CS6920", about="HW2")]),
+        FakeStream(tool_calls=[tool_call("find_deadlines", course="cs6920", about="HW2")]),
+        FakeStream("HW2 is due at the end of Week 7."),
+    ])
+    events = list(chat_turn("When is HW2 due?", session=SESSION_A, llm=lambda m, t: next(script)))
+    oks = [p["ok"] for k, p in events if k == "tool"]
+    text = "".join(p for k, p in events if k == "token")
+    assert oks == [False, False, True]
+    assert text == "HW2 is due at the end of Week 7." and events[-1][0] == "done"
+
+
+def test_the_page_is_never_left_on_silence_when_the_budget_runs_out():
+    def stubborn(messages, schemas):
+        return FakeStream(tool_calls=[tool_call("find_deadlines", course="CS6920")])
+    events = list(chat_turn("When is HW2 due?", session=SESSION_A, llm=stubborn))
+    text = "".join(p for k, p in events if k == "token")
+    assert "couldn't finish" in text and len([k for k, _ in events if k == "tool"]) == CHAT_ROUNDS
+    assert memory.recent_turns(SESSION_A)[-1]["content"] == text      # the stored answer is what was shown
