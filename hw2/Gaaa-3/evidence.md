@@ -24,7 +24,7 @@ The tool is also served through the MCP door: `tests/test_search_course_docs.py:
 Branch `hw2-Gaaa-3-red` is one commit on top of `slice-hw2-Gaaa-3`: it removes the `pattern` from `Question` in `src/contracts.py` and changes nothing else. The pull request targets `main`, because that is the branch the ruleset protects, so its diff shows the whole slice plus that one deletion. Pull request [#23](https://github.com/NTsik0/TeamRepoAIPoweredApps/pull/23), closed without merging, branch deleted.
 
 - Red run: https://github.com/NTsik0/TeamRepoAIPoweredApps/actions/runs/41220522862 (the failing job: https://github.com/NTsik0/TeamRepoAIPoweredApps/actions/runs/41220522862/job/124593914842)
-- Failure: `test_tool_golden_case[Gaaa-3:a1]`. The same branch run locally: **1 failed, 130 passed**. Both required checks failed, `ci / test (pull_request)` after 17s and `ci / test (push)` after 22s, and GitHub showed "Merging is blocked" ([screenshot](red-run-blocked.png)). The page also listed "Review required"; the failing required check blocks the merge on its own, so an approval would not have unlocked it.
+- Failure: `test_tool_golden_case[Gaaa-3:a1]`. The same branch run locally: **1 failed, 130 passed**. Both required checks failed, `ci / test (pull_request)` after 18s and `ci / test (push)` after 22s, and GitHub showed "Merging is blocked" ([screenshot](red-run-blocked.png)). The page also listed "Review required"; the failing required check blocks the merge on its own, so an approval would not have unlocked it.
 
 ![The red pull request: the required check failed and merging is blocked](red-run-blocked.png)
 
