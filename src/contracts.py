@@ -27,6 +27,14 @@ Keyword = Annotated[str, Field(
     pattern=r"^[A-Za-z0-9][A-Za-z0-9 -]{1,29}$",
     description="Only deadlines that mention this word, e.g. HW2 or Demo Day: 2 to 30 letters, digits, spaces or hyphens")]
 Limit = Annotated[int, Field(ge=1, le=20, description="The most deadlines to return, 1 to 20")]
+# Same values as CourseId, a different sentence: this tool searches documents, it does not list deadlines.
+SearchCourseId = Annotated[Literal["cs6920"], Field(description="The course whose documents to search")]
+Question = Annotated[str, Field(
+    pattern=r"^[A-Za-z0-9][A-Za-z0-9 ?.,'()/%-]{2,199}$",
+    description="The question to look up, in the words the course uses, e.g. How many points is the Design Review "
+                "worth? 3 to 200 characters, letters, digits, spaces and ? . , ' ( ) / % - only. No ':' or '#', so "
+                "a time like 10:00 has to be asked as 10 00")]
+TopK = Annotated[int, Field(ge=1, le=5, description="The most sections to return, 1 to 5")]
 
 
 class Contract(BaseModel):
@@ -46,3 +54,10 @@ class FindDeadlines(Contract):
     course: CourseId
     about: Keyword | None = None
     limit: Limit = 10
+
+
+class SearchCourseDocs(Contract):
+    """Find the sections of the course documents that answer a question, each with the document it came from. Reads only."""
+    course: SearchCourseId
+    question: Question
+    k: TopK = 3

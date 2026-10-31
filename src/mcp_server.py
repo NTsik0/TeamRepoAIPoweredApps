@@ -20,9 +20,10 @@ from mcp.server.mcpserver.exceptions import ToolError
 from mcp.types import ToolAnnotations
 
 from src import tools
-from src.contracts import CourseId, DaysBefore, DueDate, FindDeadlines, Keyword, Limit, SaveReminder, Title
+from src.contracts import (CourseId, DaysBefore, DueDate, FindDeadlines, Keyword, Limit, Question,
+                           SaveReminder, SearchCourseDocs, SearchCourseId, Title, TopK)
 
-mcp = MCPServer("coursemate", instructions="KIU CS6920 course assistant: find course deadlines and save reminders for them.")
+mcp = MCPServer("coursemate", instructions="KIU CS6920 course assistant: search the course documents, find course deadlines and save reminders for them.")
 READS = ToolAnnotations(read_only_hint=True, open_world_hint=False)
 ADDS = ToolAnnotations(read_only_hint=False, destructive_hint=False, idempotent_hint=True, open_world_hint=False)
 
@@ -54,6 +55,11 @@ def save_reminder(course: CourseId, title: Title, due: DueDate,
 @mcp.tool(annotations=READS, description=FindDeadlines.__doc__)
 def find_deadlines(course: CourseId, about: Keyword | None = None, limit: Limit = 10) -> tools.DeadlineList:
     return _run(tools.find_deadlines, FindDeadlines(course=course, about=about, limit=limit))
+
+
+@mcp.tool(annotations=READS, description=SearchCourseDocs.__doc__)
+def search_course_docs(course: SearchCourseId, question: Question, k: TopK = 3) -> tools.SectionList:
+    return _run(tools.search_course_docs, SearchCourseDocs(course=course, question=question, k=k))
 
 
 if __name__ == "__main__":

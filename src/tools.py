@@ -1,7 +1,8 @@
 """CourseMate's tools: the code that acts, behind the contracts in src/contracts.py (Week 5).
 
-Two tools: save_reminder (Lab 5) only adds; find_deadlines (HW2, NTsik0) only reads. Nothing here deletes, edits another student's
-data, or sends a message: that is the least-privilege decision, made by what we chose NOT to build.
+Three tools: save_reminder (Lab 5) only adds; find_deadlines (HW2, NTsik0) and search_course_docs (HW2, Gaaa-3)
+only read. Nothing here deletes, edits another student's data, or sends a message: that is the least-privilege
+decision, made by what we chose NOT to build.
 
 Every tool takes a validated contract object (never raw model output) and returns a pydantic
 result. A failure we expected raises ToolFailure with a message written for the model to read
@@ -18,18 +19,25 @@ import os
 import re
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
+from functools import lru_cache
 from pathlib import Path
 from typing import Callable, Literal
 from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel
 
-from src.contracts import Contract, FindDeadlines, SaveReminder
+from src import answer as grounded
+from src import index as course_index
+from src.chunk import load_corpus
+from src.contracts import Contract, FindDeadlines, SaveReminder, SearchCourseDocs
 from src.courses import load_course
+from src.search import hybrid
 
 TBILISI = ZoneInfo("Asia/Tbilisi")
 MAX_REMINDERS = 50          # per student
 MAX_DAYS_AHEAD = 180        # about one semester
+CORPUS = Path("data/corpus")
+MAX_SECTION_CHARS = 600     # about 150 tokens: enough to answer from, small enough for three of them
 
 
 class ToolFailure(Exception):
@@ -133,6 +141,53 @@ def find_deadlines(args: FindDeadlines) -> DeadlineList:
     return DeadlineList(course=args.course, deadlines=found[:args.limit], total=len(found))
 
 
+# ---------------------------------------------------------------- search_course_docs
+
+
+class Section(BaseModel):
+    source: str               # the document id, e.g. 'milestones/hw1'. Never a file path
+    heading: str              # the '## ' heading this section is under
+    text: str                 # the section as written, line breaks collapsed, cut at MAX_SECTION_CHARS
+
+
+class SectionList(BaseModel):
+    course: str
+    sources: list[str]        # the distinct documents behind the sections, in rank order: a citation line
+    sections: list[Section]
+
+
+@lru_cache(maxsize=1)
+def corpus_index() -> course_index.Index:
+    """The index, built once per process. data/index/ is in .gitignore, so CI (and a fresh clone) has
+    none: the first call builds it from data/corpus/. Offline that is the trigram hash in src/offline.py,
+    so it needs no key, no network and costs nothing."""
+    try:
+        return course_index.load()
+    except (FileNotFoundError, course_index.IndexMismatch):
+        return course_index.build(load_corpus(CORPUS))
+
+
+def clip(text: str) -> str:
+    """One line, cut at a word boundary. The words are the document's own."""
+    line = " ".join(text.split())
+    return line if len(line) <= MAX_SECTION_CHARS else line[:MAX_SECTION_CHARS].rsplit(" ", 1)[0] + " ..."
+
+
+def search_course_docs(args: SearchCourseDocs) -> SectionList:
+    """The sections of data/corpus most likely to answer the question, each with its document and heading.
+    This is the Week 4 retriever (hybrid()) behind a contract: no model call, so the text cannot be
+    invented, only copied. Below the relevance floor it refuses instead of returning the least bad match."""
+    hits = hybrid(corpus_index(), args.question, k=args.k)
+    best = max((h.score for h in hits), default=0.0)
+    if best < grounded.min_score():
+        raise ToolFailure(f"Nothing in the {args.course} course documents matched that question. Ask a shorter "
+                          "question in the words the course uses, like 'Design Review points' or 'HW2 deadline'.")
+    return SectionList(
+        course=args.course,
+        sources=list(dict.fromkeys(h.chunk.doc_id for h in hits)),   # distinct, first mention wins
+        sections=[Section(source=h.chunk.doc_id, heading=h.chunk.section, text=clip(h.chunk.text)) for h in hits])
+
+
 # ---------------------------------------------------------------- the registry
 
 @dataclass(frozen=True)
@@ -152,6 +207,7 @@ class Tool:
 TOOLS = {t.name: t for t in [
     Tool("save_reminder", SaveReminder, save_reminder, writes=True),
     Tool("find_deadlines", FindDeadlines, find_deadlines),
+    Tool("search_course_docs", SearchCourseDocs, search_course_docs),
 ]}
 
 

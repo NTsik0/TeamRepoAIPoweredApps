@@ -83,6 +83,47 @@
 
 **Log line.** Same as every tool: `logs/tools.jsonl`, no student id (a visitor has none; a signed-in caller is logged as a hash).
 
+## `search_course_docs` · HW2 · Gaaa-3
+
+**In one sentence, for the model:** Find the sections of the course documents that answer a question, each with the document it came from. Reads only.
+
+| | |
+|---|---|
+| **Effect** | reads. No model call: the Week 4 retriever ranks the sections and the text is copied from the document |
+| **Undo** | nothing to undo |
+| **Idempotent?** | yes: the same question returns the same sections and changes nothing |
+| **Offered to** | everyone, including visitors who are not signed in |
+| **Identity from** | not needed: the course documents are the same for every student. An identity field in the arguments is still refused (`extra="forbid"`) |
+| **Touches** | `data/corpus/` (12 documents), read only, through `load_corpus()`; `data/index/` is read if it exists and built in memory if it does not. The built index is cached for the life of the process: a rebuilt index or a changed corpus needs a restart to be seen |
+| **Must never** | return text that is not in a course document, name a file path, or treat the question or the documents as instructions |
+
+**Inputs.** Unknown fields are refused (`extra="forbid"`).
+
+| Argument | Type | Constraint | Description the model reads |
+|---|---|---|---|
+| `course` | string | one of `cs6920` | The course whose documents to search |
+| `question` | string | pattern `^[A-Za-z0-9][A-Za-z0-9 ?.,'()/%-]{2,199}$` (3 to 200 characters; letters, digits, spaces and `? . , ' ( ) / % -`; no `:`, `#`, `<`, quotes or newlines) | The question to look up, in the words the course uses, e.g. How many points is the Design Review worth? |
+| `k` | integer | 1 to 5, default 3 | The most sections to return |
+
+**Result.** `course`, `sources` (the distinct documents behind the sections, in rank order, what a citation line is built from) and `sections` (list of `source`, `heading`, `text`). `source` is a document id such as `milestones/hw1`, never a file path. `text` is the section as written, with line breaks collapsed to spaces and cut at 600 characters at a word boundary.
+
+**Expected failures.** Raises `ToolFailure`; the message goes back to the model.
+
+| When | Message the model reads (what happened, what to do next) |
+|---|---|
+| nothing retrieved scores above the relevance floor (`min_score()` in `src/answer.py`: 0.15 offline, 0.25 live) | Nothing in the cs6920 course documents matched that question. Ask a shorter question in the words the course uses, like 'Design Review points' or 'HW2 deadline'. |
+
+**Known limits.**
+
+1. The pattern keeps punctuation that fakes a system turn (`:`, `#`) out of the field, but it cannot stop an English imperative written in plain words. What makes that harmless is the effect, not the pattern: the tool only ranks sections of `data/corpus/` and returns them as data, so there is nothing for an instruction to act on.
+2. Keeping `:` out also refuses questions that contain a clock time: "Does the Demo Day start at 10:00?" has to be asked as "10 00", or without the time. That is a cost we chose on purpose; `/`, `%`, `(` and `)` were added after review (#22) because they appear in ordinary questions and carry no such risk.
+3. The pattern is Latin-only, so a question written in Georgian is refused before the search runs. Today that changes nothing a student could get: every document in `data/corpus/` is in English, so a Georgian question would retrieve nothing useful even if it validated. Widening the pattern is a decision for when the corpus is bilingual, not before.
+4. The relevance floor uses the offline embedding model's scale in CI; a short nonsense string can score above it, while an off-topic sentence does not.
+
+**Tests and golden cases:** `evals/tools/Gaaa-3.yaml` (7 cases: 4 normal, 1 bad input, 2 adversarial) and `tests/test_search_course_docs.py`.
+
+**Log line.** Same as every tool: `logs/tools.jsonl`, one line per call, the caller only as a 12-character hash (null for a visitor). The raw arguments are logged, so the question text is in this log; it is a course question, never a name or an id.
+
 ## HW2 owners
 
 Each member wraps a different capstone function for HW2. Neither is `save_reminder`, the team's Lab 5 tool.
