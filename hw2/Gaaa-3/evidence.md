@@ -21,7 +21,7 @@ The tool is also served through the MCP door: `tests/test_search_course_docs.py:
 
 ## The red run: proof the gate blocks
 
-Branch `hw2-Gaaa-3-red` removed the `pattern` from `Question` in `src/contracts.py` and changed nothing else (a one-line diff). Pull request [#FILL](https://github.com/NTsik0/TeamRepoAIPoweredApps/pull/FILL), closed without merging, branch deleted.
+Branch `hw2-Gaaa-3-red` is one commit on top of `slice-hw2-Gaaa-3`: it removes the `pattern` from `Question` in `src/contracts.py` and changes nothing else. The pull request targets `main`, because that is the branch the ruleset protects, so its diff shows the whole slice plus that one deletion. Pull request [#FILL](https://github.com/NTsik0/TeamRepoAIPoweredApps/pull/FILL), closed without merging, branch deleted.
 
 - Red run: FILL (Actions run link)
 - Failure: `test_tool_golden_case[Gaaa-3:a1]`. The same branch run locally: **1 failed, 130 passed**. The required check `test` failed and GitHub showed "Merging is blocked" ([screenshot](red-run-blocked.png)).
