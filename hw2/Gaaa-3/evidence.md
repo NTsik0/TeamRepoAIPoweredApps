@@ -1,6 +1,6 @@
 # HW2 · Evidence · `search_course_docs` · Gaaa-3
 
-> **Still to fill in before submitting** (five places, all marked `FILL`): the product pull request number, the red pull request number, and the three Actions run links (red, green on the pull request, green on `main` after the merge).
+> **Still to fill in before submitting:** the two green Actions run links (on pull request #22, and on `main` after the merge), both marked `FILL`.
 
 ## The golden cases
 
@@ -21,9 +21,9 @@ The tool is also served through the MCP door: `tests/test_search_course_docs.py:
 
 ## The red run: proof the gate blocks
 
-Branch `hw2-Gaaa-3-red` is one commit on top of `slice-hw2-Gaaa-3`: it removes the `pattern` from `Question` in `src/contracts.py` and changes nothing else. The pull request targets `main`, because that is the branch the ruleset protects, so its diff shows the whole slice plus that one deletion. Pull request [#FILL](https://github.com/NTsik0/TeamRepoAIPoweredApps/pull/FILL), closed without merging, branch deleted.
+Branch `hw2-Gaaa-3-red` is one commit on top of `slice-hw2-Gaaa-3`: it removes the `pattern` from `Question` in `src/contracts.py` and changes nothing else. The pull request targets `main`, because that is the branch the ruleset protects, so its diff shows the whole slice plus that one deletion. Pull request [#23](https://github.com/NTsik0/TeamRepoAIPoweredApps/pull/23), closed without merging, branch deleted.
 
-- Red run: FILL (Actions run link)
+- Red run: https://github.com/NTsik0/TeamRepoAIPoweredApps/actions/runs/41220522862 (the failing job: https://github.com/NTsik0/TeamRepoAIPoweredApps/actions/runs/41220522862/job/124593914842)
 - Failure: `test_tool_golden_case[Gaaa-3:a1]`. The same branch run locally: **1 failed, 130 passed**. Both required checks failed, `ci / test (pull_request)` after 17s and `ci / test (push)` after 22s, and GitHub showed "Merging is blocked" ([screenshot](red-run-blocked.png)). The page also listed "Review required"; the failing required check blocks the merge on its own, so an approval would not have unlocked it.
 
 ![The red pull request: the required check failed and merging is blocked](red-run-blocked.png)
@@ -32,7 +32,7 @@ Branch `hw2-Gaaa-3-red` is one commit on top of `slice-hw2-Gaaa-3`: it removes t
 
 ## The green run
 
-Product pull request [#FILL](https://github.com/NTsik0/TeamRepoAIPoweredApps/pull/FILL), branch `slice-hw2-Gaaa-3`.
+Product pull request [#22](https://github.com/NTsik0/TeamRepoAIPoweredApps/pull/22), branch `slice-hw2-Gaaa-3`, approved by NTsik0 and squash-merged on 31 October 2026.
 
 - Green run on the pull request: FILL (Actions run link)
 - Green run on `main` after the merge: FILL (Actions run link)
