@@ -11,6 +11,7 @@ os.environ["COURSEMATE_TOOL_LOG"] = os.path.join(_tmp, "tools.jsonl")
 os.environ["COURSEMATE_TODAY"] = "2026-10-28"
 os.environ.pop("COURSEMATE_MIN_SCORE", None)
 os.environ.pop("COURSEMATE_STUDENT", None)
+os.environ.pop("COURSEMATE_NOW", None)
 os.environ.pop("OPENROUTER_API_KEY", None)
 
 from pathlib import Path  # noqa: E402

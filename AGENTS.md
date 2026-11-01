@@ -17,6 +17,7 @@ test:     pytest   (must pass on a clean clone, with no network and no OPENROUTE
 - Grounded answers (`src/answer.py`): every answer cites a retrieved source as `[n]` or refuses. Refuse before calling the model when nothing scores above the threshold. A failed citation check is a refusal, never a warning.
 - Deadline photos (`src/deadline_extract.py`, `src/deadline_checks.py`): images are downscaled to 1024 px before sending; every field returns value, evidence, confidence, and evidence is nullable, never a guess. `decide()` stays pure (no model, no clock, no files).
 - Tools (`docs/tool-contracts.md`): every contract in `src/contracts.py` has `extra="forbid"`, a pattern or fixed set on every string and bounds on every number. Every call goes through `call_tool()` in `src/act.py` (offered? valid? identity from us?) and writes one line to `logs/tools.jsonl`. Expected failures raise `ToolFailure` with a message for the model.
+- Session state (`docs/state-contract.md`): everything remembered across turns lives in `src/memory.py`, keyed by session or by the student's hash, filtered by expiry on every read, and deleted (not flagged) by `DELETE /me/memory`. Streams are logged once, after the last chunk, with `ttft_ms`.
 - Tests and CI run with `COURSEMATE_OFFLINE=1` (set in `tests/conftest.py`). Live golden runs: `python -m src.index && python -m evals.run_golden`, with the key exported.
 
 ## Always
@@ -36,3 +37,5 @@ test:     pytest   (must pass on a clean clone, with no network and no OPENROUTE
 - Prefill a low-confidence or unevidenced value into what the student or reviewer sees: hard fields are returned empty
 - Put a user, student or account id in a tool's arguments: the caller comes from the session (`X-Student-Id` on `POST /act`, `COURSEMATE_STUDENT` in the MCP server)
 - Add a tool that deletes or sends without asking first
+- Store a raw user id, a recording, or anything the person did not state
+- Add a memory write the user did not ask for (conversation turns are the only automatic write, see `docs/state-contract.md`)

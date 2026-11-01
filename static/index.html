@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KIU CourseMate</title>
+<style>
+  :root { --bg: #f7f7f5; --fg: #1c1c1c; --muted: #6b6b6b; --line: #dcdcd6; --accent: #1f5fbf; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #161616; --fg: #ececec; --muted: #9a9a9a; --line: #333; --accent: #7aa7ff; } }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, sans-serif; }
+  main { max-width: 680px; margin: 0 auto; padding: 24px 16px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .muted { color: var(--muted); font-size: 13px; }
+  #log { margin: 16px 0; display: flex; flex-direction: column; gap: 10px; }
+  .msg { padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; white-space: pre-wrap; }
+  .you { align-self: flex-end; background: transparent; }
+  .bot { align-self: flex-start; }
+  form, .row { display: flex; gap: 8px; }
+  input { flex: 1; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--fg); font: inherit; }
+  button { padding: 10px 14px; border: 1px solid var(--accent); border-radius: 8px; background: var(--accent); color: #fff; font: inherit; cursor: pointer; }
+  button.ghost { background: transparent; color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <h1>KIU CourseMate</h1>
+  <p class="muted">Answers stream as they are written. This tab is one session; the last 6 turns are kept for 24 hours.
+    Reminders are saved only when you ask, and "Forget me" deletes everything at once.</p>
+  <div class="row"><input id="student" placeholder="Student id (stand-in for sign-in; leave empty as a visitor)"></div>
+  <div id="log"></div>
+  <form id="ask"><input id="q" placeholder="e.g. Remind me about HW2 Tool Contract due 2026-11-08" required minlength="3" maxlength="500"><button>Send</button></form>
+  <p class="row"><button class="ghost" id="forget" type="button">Forget me</button><span class="muted" id="status"></span></p>
+</main>
+<script>
+const session = crypto.randomUUID();                                   // a new tab is a new session
+const headers = () => {
+  const h = { "X-Session-Id": session }, s = document.getElementById("student").value.trim();
+  if (s) h["X-Student-Id"] = s;
+  return h;
+};
+const add = (cls, text) => { const d = document.createElement("div"); d.className = "msg " + cls; d.textContent = text;
+  document.getElementById("log").append(d); return d; };
+const status = t => document.getElementById("status").textContent = t;
+
+async function streamChat(question, onEvent) {                         // from Lab-6/templates/sse-client.html
+  const r = await fetch("/chat", { method: "POST", body: JSON.stringify({ question }),
+                                   headers: { ...headers(), "content-type": "application/json" } });
+  if (!r.ok) { onEvent("error", await r.json()); return; }
+  const reader = r.body.getReader(), dec = new TextDecoder();
+  let buf = "", i;
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    while ((i = buf.indexOf("\n\n")) >= 0) {
+      const block = buf.slice(0, i); buf = buf.slice(i + 2);
+      onEvent(/^event: (.*)$/m.exec(block)[1], JSON.parse(/^data: (.*)$/m.exec(block)[1]));
+    }
+  }
+}
+
+document.getElementById("ask").addEventListener("submit", async e => {
+  e.preventDefault();
+  const q = document.getElementById("q"), question = q.value; q.value = "";
+  add("you", question);
+  const out = add("bot", "…"); let first = true;
+  await streamChat(question, (event, data) => {
+    if (event === "token") { if (first) { out.textContent = ""; first = false; } out.textContent += data.text; }
+    if (event === "tool" && data.stored) status(`Saved "${data.stored.title}". Delete any time: Forget me.`);
+    if (event === "tool" && !data.ok) status(`Tool refused: ${data.error}`);
+    if (event === "done") status(`first token ${data.ttft_ms ?? "–"} ms · ${data.tokens_in + data.tokens_out} tokens · $${data.cost_usd}`);
+    if (event === "error") out.textContent = data.error.message;
+  });
+});
+
+document.getElementById("forget").addEventListener("click", async () => {
+  const r = await fetch("/me/memory", { method: "DELETE", headers: headers() });
+  const d = await r.json();
+  status(r.ok ? `Forgotten: ${d.reminders} reminders, ${d.turns} turns.` : d.error.message);
+});
+</script>
+</body>
+</html>

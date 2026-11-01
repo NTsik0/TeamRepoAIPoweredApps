@@ -115,7 +115,7 @@ def data_url(image: bytes) -> str:
     return "data:image/jpeg;base64," + base64.b64encode(image).decode("ascii")
 
 
-def log_usage(model: str, tokens_in: int, tokens_out: int, latency_ms: int, kind: str = "chat") -> dict:
+def log_usage(model: str, tokens_in: int, tokens_out: int, latency_ms: int, kind: str = "chat", **extra) -> dict:
     """One line per model call: the log-entry half of the Evidence Rule."""
     line = {
         "ts": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -125,6 +125,7 @@ def log_usage(model: str, tokens_in: int, tokens_out: int, latency_ms: int, kind
         "completion_tokens": tokens_out,
         "cost_usd": cost_usd(model, tokens_in, tokens_out),
         "latency_ms": latency_ms,
+        **extra,                             # Week 6: ttft_ms for streams
     }
     USAGE_LOG.parent.mkdir(parents=True, exist_ok=True)
     with USAGE_LOG.open("a", encoding="utf-8") as f:
@@ -213,3 +214,69 @@ def complete_tools(messages: list[dict], tools: list[dict], max_tokens: int = 15
     calls = [{"id": c["id"], "name": c["function"]["name"], "arguments": c["function"].get("arguments") or "{}"}
              for c in (m.get("tool_calls") or [])]
     return {"content": m.get("content"), "tool_calls": calls, "reasoning_details": m.get("reasoning_details")}
+
+
+# --- Week 6 · streaming ---------------------------------------------------------
+
+class Stream:
+    """One model turn, streamed. Iterate it for text as it arrives; afterwards read .text,
+    .tool_calls, .reasoning_details and .ttft_ms. Tool calls arrive in fragments and are stitched
+    by index here; src/chat.py decides whether anything runs (the same gates as Week 5).
+    Usage is logged once per stream, after the last chunk, with time to first token; the log
+    line is written even when the model asked for a tool."""
+
+    def __init__(self, messages: list[dict], tools: list[dict] | None = None, max_tokens: int = 1500):
+        self.messages, self.tools, self.max_tokens = messages, tools or [], max_tokens
+        self.text, self.tool_calls, self.reasoning_details = "", [], None
+        self.ttft_ms: int | None = None
+        self.tokens_in = self.tokens_out = 0
+        self.model = offline.MODEL if OFFLINE else CHAT_MODEL
+
+    def __iter__(self):
+        t0 = time.perf_counter()
+        parts: dict[int, dict] = {}
+        for delta, usage in self._chunks():
+            if usage:                                              # OpenRouter: the last chunk
+                self.tokens_in = int(usage.get("prompt_tokens", 0))
+                self.tokens_out = int(usage.get("completion_tokens", 0))
+            if not delta:
+                continue
+            if delta.get("reasoning_details"):
+                self.reasoning_details = (self.reasoning_details or []) + delta["reasoning_details"]
+            for tc in delta.get("tool_calls") or []:              # fragments, keyed by index
+                p = parts.setdefault(tc.get("index", 0), {"id": "", "name": "", "arguments": ""})
+                p["id"] = tc.get("id") or p["id"]
+                fn = tc.get("function") or {}
+                p["name"] = fn.get("name") or p["name"]
+                p["arguments"] += fn.get("arguments") or ""
+            if delta.get("content"):
+                if self.ttft_ms is None:
+                    self.ttft_ms = _ms(t0)                         # time to first token: the UX number
+                self.text += delta["content"]
+                yield delta["content"]
+        self.tool_calls = [{**parts[i], "arguments": parts[i]["arguments"] or "{}"} for i in sorted(parts)]
+        log_usage(self.model, self.tokens_in, self.tokens_out, _ms(t0), kind="stream", ttft_ms=self.ttft_ms)
+
+    def _chunks(self):
+        if OFFLINE:
+            yield from offline.stream(self.messages, self.tools)
+            return
+        body = {"model": CHAT_MODEL, "messages": self.messages, "stream": True, "temperature": 0,
+                "max_tokens": self.max_tokens, "reasoning": {"effort": "low"}, "usage": {"include": True}}
+        if self.tools:
+            body.update(tools=self.tools, tool_choice="auto")
+        with httpx.stream("POST", OPENROUTER_URL, headers={"Authorization": f"Bearer {_key()}"},
+                          json=body, timeout=60) as r:
+            r.raise_for_status()
+            for line in r.iter_lines():
+                if not line.startswith("data: ") or line == "data: [DONE]":
+                    continue                                       # SSE comments keep the connection alive
+                chunk = json.loads(line[6:])
+                if chunk.get("model"):
+                    self.model = chunk["model"]
+                choices = chunk.get("choices") or []
+                yield (choices[0].get("delta") if choices else None), chunk.get("usage")
+
+
+def stream(messages: list[dict], tools: list[dict] | None = None) -> Stream:
+    return Stream(messages, tools)

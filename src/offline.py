@@ -118,3 +118,21 @@ def complete_tools(messages: list[dict], tools: list[dict]) -> tuple[dict, int, 
     out = {"content": content, "tool_calls": calls, "reasoning_details": None}
     tokens_in = sum(len(str(m.get("content") or "").split()) for m in messages) + 40 * len(tools)
     return out, tokens_in, len((content or json.dumps(calls)).split())
+
+
+# --- Week 6 · a stand-in for streaming ------------------------------------------
+
+def stream(messages: list[dict], tools: list[dict]):
+    """Yields (delta, usage) pairs shaped like OpenRouter's stream chunks: text word by word,
+    a tool call in fragments (id and name first, then the arguments in pieces), usage last."""
+    msg, tokens_in, tokens_out = complete_tools(messages, tools)
+    for call in msg["tool_calls"]:
+        yield {"tool_calls": [{"index": 0, "id": call["id"], "function": {"name": call["name"], "arguments": ""}}]}, None
+        args = call["arguments"]
+        for i in range(0, len(args), 8):
+            yield {"tool_calls": [{"index": 0, "function": {"arguments": args[i:i + 8]}}]}, None
+    if msg["content"]:
+        words = msg["content"].split(" ")
+        for i, w in enumerate(words):
+            yield {"content": w + (" " if i < len(words) - 1 else "")}, None
+    yield None, {"prompt_tokens": tokens_in, "completion_tokens": tokens_out}
