@@ -1,5 +1,6 @@
 """Every test runs offline: no key, no network, no cost. Logs and state go to a temp folder.
-For the tools (Week 5), today is pinned to Wednesday 28 October 2026."""
+For the tools (Week 5) and the memory store (Week 6), today is pinned to Wednesday 28 October 2026.
+Both clocks: if only one is pinned, reminders saved for "today" expire on the real date and the tests age out."""
 import os
 import tempfile
 
@@ -11,7 +12,7 @@ os.environ["COURSEMATE_TOOL_LOG"] = os.path.join(_tmp, "tools.jsonl")
 os.environ["COURSEMATE_TODAY"] = "2026-10-28"
 os.environ.pop("COURSEMATE_MIN_SCORE", None)
 os.environ.pop("COURSEMATE_STUDENT", None)
-os.environ.pop("COURSEMATE_NOW", None)
+os.environ["COURSEMATE_NOW"] = "2026-10-28T08:00:00+00:00"   # the store's clock, same day as COURSEMATE_TODAY
 os.environ.pop("OPENROUTER_API_KEY", None)
 
 from pathlib import Path  # noqa: E402
