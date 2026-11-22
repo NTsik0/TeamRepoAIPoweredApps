@@ -14,6 +14,8 @@
 | **Touches** | `data/courses/cs6920.md`, read only, through `load_course()`. No other file, no network |
 | **Must never** | state a deadline that is not in the document, or build a file path from the model's text |
 
+**Read or consequential (Lab 7).** `find_deadlines` is a read tool: it changes nothing and returns the same quotes however often it is called, so a loop may run it without asking anyone. In our Lab 7 loop ([`src/agent.py`](https://github.com/NTsik0/TeamRepoAIPoweredApps/blob/main/src/agent.py)) it is the step that checks the deadline in the document; the consequential step, `save_reminder`, is the one parked until the student confirms ([`docs/agent-contract.md`](https://github.com/NTsik0/TeamRepoAIPoweredApps/blob/main/docs/agent-contract.md), line 3).
+
 **Inputs.** Unknown fields are refused (`extra="forbid"`).
 
 | Argument | Type | Constraint | Description the model reads |
