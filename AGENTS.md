@@ -18,6 +18,7 @@ test:     pytest   (must pass on a clean clone, with no network and no OPENROUTE
 - Deadline photos (`src/deadline_extract.py`, `src/deadline_checks.py`): images are downscaled to 1024 px before sending; every field returns value, evidence, confidence, and evidence is nullable, never a guess. `decide()` stays pure (no model, no clock, no files).
 - Tools (`docs/tool-contracts.md`): every contract in `src/contracts.py` has `extra="forbid"`, a pattern or fixed set on every string and bounds on every number. Every call goes through `call_tool()` in `src/act.py` (offered? valid? identity from us?) and writes one line to `logs/tools.jsonl`. Expected failures raise `ToolFailure` with a message for the model.
 - Session state (`docs/state-contract.md`): everything remembered across turns lives in `src/memory.py`, keyed by session or by the student's hash, filtered by expiry on every read, and deleted (not flagged) by `DELETE /me/memory`. Streams are logged once, after the last chunk, with `ttft_ms`.
+- Supervised loop (`docs/agent-contract.md`): `src/agent.py` offers only `LOOP_TOOLS`, stops after `MAX_STEPS`, and parks every tool in `NEEDS_YES` (`save_reminder`). Only `confirm()` runs a parked action, by id, once, with no model; `POST /plan/confirm` takes ids, never arguments.
 - Tests and CI run with `COURSEMATE_OFFLINE=1` (set in `tests/conftest.py`). Live golden runs: `python -m src.index && python -m evals.run_golden`, with the key exported.
 
 ## Always
@@ -39,3 +40,4 @@ test:     pytest   (must pass on a clean clone, with no network and no OPENROUTE
 - Add a tool that deletes or sends without asking first
 - Store a raw user id, a recording, or anything the person did not state
 - Add a memory write the user did not ask for (conversation turns are the only automatic write, see `docs/state-contract.md`)
+- Never run a tool in NEEDS_YES from inside a loop; park it and wait for confirm()

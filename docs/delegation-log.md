@@ -33,7 +33,7 @@ Format:
 - **Came back wrong:** (1) the refusal threshold copied from the reference (0.25) refused a real question offline ("When is HW1 due?" scored 0.23, gibberish 0.11); set to 0.15 for the offline model only. (2) Offline, at k = 5 the updated HW1 page was not retrieved for "wen is hw1 due", so the agent moved to k = 8; the live run reversed it (k = 5: 4/5, k = 8: 3/5), decision 0002. (3) Moving to k = 8 made the invented-citation test meaningless, because `[7]` became a valid source; the test now uses `[12]`, which stays invalid at either k. (4) The course pages contained the instructor's name and email; replaced, because the corpus must hold no personal data.
 - **Caught by:** running the golden set offline and reading which sources were retrieved; a failing test after the k change; reading the corpus before committing it.
 - **Verified:** 54 offline tests pass with no key. Removing each refusal route (threshold, model-says-no, citation check) makes at least one test fail. My live golden run on 2026-10-14: k = 5 passed 4/5 (0.80), k = 8 passed 3/5; g2 fails at both (the model says the sources do not answer although `course/overview` was retrieved). Cost about $0.0016 per answer, latency p50 4.7 s, p95 14.1 s (`evals/results/usage-2026-10-14-1942.json`).
-- **Decision:** [fill in after review]
+- **Decision:** merged. Pull request #12, approved by Gaaa-3 and squash-merged on 2026-10-14, tagged `lab4-rag`.
 - **AGENTS.md change:** grounding rules added (see AGENTS.md "Never" and conventions).
 - **Cost:** one session; live runs cost $0.016 in total (22 model calls).
 
@@ -43,7 +43,7 @@ Format:
 - **Came back wrong:** (1) the first test for "a guessed date without evidence" used confidence 0.95, so swapping the order of the checks (confidence before evidence) broke nothing: no test protected the policy's "evidence before confidence" rule. Found by deliberately breaking `decide()` four ways; three were caught, this one was not. Added `test_evidence_is_checked_before_confidence` (no evidence and confidence 0.2 must be hard); the mutation now fails. (2) The first clean screenshot candidate showed browser tabs with a teammate's real name; the cropped screenshot was used instead.
 - **Caught by:** mutation check; reading the images before committing them.
 - **Verified:** 77 offline tests pass with no key. My live run on 2026-10-14 (`evals/results/2026-10-14-2009-images.json`): 4/4 routed as expected. clean → accepted (`2026-10-20`, `23:59`); degraded → review; ambiguous → confirm ("Which date is 'next tuesday'?"); mouse → rejected. One surprise: on the blurred photo the model read the date with evidence but not the item, so `item` (not `due_date`, as the spec predicted) was the hard field. The spec now records what happened.
-- **Decision:** [fill in after review]
+- **Decision:** merged. Pull request #13, approved by Gaaa-3 and squash-merged on 2026-10-14, tagged `lab3-multimodal`.
 - **AGENTS.md change:** downscale and nullable evidence convention; "Never prefill a low-confidence or unevidenced value".
 
 ### Entry 4 · Lab 5: the tool contract
@@ -57,7 +57,7 @@ Format:
   {"ts": "2026-10-28T14:54:25+00:00", "tool": "save_reminder", "ok": true, "error": null, "student": "02f053fefa08", "latency_ms": 7}
   ```
   (arguments left out here for length; the full lines are in the log.) The student is stored and logged only as a hash.
-- **Decision:** [fill in after review]
+- **Decision:** merged. Pull request #17, approved by Gaaa-3 and squash-merged on 2026-10-28, tagged `lab5-tools-mcp`.
 - **AGENTS.md change:** two "Never" lines (no identity in tool arguments; no tool that deletes or sends without asking) and a tools convention.
 - **Cost:** one session, 0 live model calls by the agent.
 
@@ -88,6 +88,17 @@ Format:
 - **Came back wrong, found in my live check (2026-10-31):** on my first run both answers stayed on "…" and the log said `ttft_ms: null`. `logs/tools.jsonl` showed why: the model sent `course: "CS6920"` (capitals), the contract refused it, and the turn allowed only one more round, which the model spent on another tool call instead of text, so the turn ended with nothing to show. Fixed in `f96de28`: the chat turn now has `CHAT_ROUNDS` = 4 (Lab 5's three tool rounds plus one to answer), the system prompt says the course id is lowercase, and if the budget runs out the student is told so instead of being left on silence. Two new tests replay that sequence with a fake model; both fail on the old turn.
 - **Caught by:** running the full suite after the move; reading the `llm.py` diff for removed lines; my live check and the tool log. Three mutations of `src/memory.py`, each caught: reading turns without the expiry filter fails the lifetime test (and three others); a `forget()` that flags rows instead of deleting them fails both deletion tests; reading reminders by kind without the student key fails the scope test.
 - **Verified:** plain `pytest`, offline with no key: 145 passed (12 new in `tests/test_state.py`). Live check after the fix, 2026-10-31 (google/gemini-3.8-flash, page at `/`, signed in as a test student): "When is HW2 due?" streamed an answer from the course document; "Remind me about HW2 Tool Contract due 2026-11-08" saved the reminder through `save_reminder` (remind on 2026-11-06); "What did I just ask you to remember?" answered with that reminder, so the turn remembers across messages; "Forget me" returned "1 reminders, 6 turns". `logs/usage.jsonl` has one `stream` line per model round with real token counts, and `ttft_ms` of 1795, 1511 and 2067 ms for the rounds that wrote text (`null` for the round that only asked for the tool, which wrote none). About $0.0008 per answer.
-- **Decision:** [fill in after review]
+- **Decision:** merged. Pull request #25, approved by Gaaa-3 and squash-merged on 2026-11-01, tagged `lab6-streaming-state`.
 - **AGENTS.md change:** two "Never" lines (no raw id, recording or unstated fact; no memory write the user did not ask for) and a session-state convention.
 - **Cost:** one session; 0 live model calls by the agent; my live checks cost about $0.009 in total.
+
+### Entry 8 · Lab 7: the supervised loop
+- **Task:** Lab 7 Steps 1 to 3 and the studio: `docs/agent-contract.md`, `src/agent.py` from `Lab-7/templates/agent_starter.py` with its three ADAPT lines, `tests/test_agent.py` from the template, `POST /plan` and `POST /plan/confirm`, the AGENTS.md line. Branch `slice-lab7-agent-loop`.
+- **Delegated to:** Claude (Opus 5.5), pointed at `Lab-7/README.md`, the two templates, `examples/campuspulse-agent/src/simple_agent.py` and `AGENTS.md`. Rung 3: the agent edits, I read every line.
+- **Plan check:** the plan (three pull requests, the goal, `save_reminder` as the one tool that waits for a yes) was written out and approved by me on 2026-11-23 before any file was written. The goal was chosen so the loop never has to work out a date: the course document names weeks, not dates, so the date comes from the student and the student confirms it.
+- **Came back wrong:** (1) the starter keys parked plans by the raw user id; AGENTS.md says never store a raw id, so `PENDING` is keyed by `student_key()`. (2) A visitor's run crashed in `finish()` on `student_key(None)`; a visitor has no write tool, so nothing is parked for them now. (3) The first `Approval` body for `/plan/confirm` had no `extra="forbid"`, so `{"approve": ["a1"], "arguments": {...}}` was accepted with the arguments silently dropped. Safe by luck, the same lesson as my Week 5 entry; it now refuses with 422, and ids must match `^a[0-9]{1,2}$`. (4) The starter's `facts()` used the server's `date.today()`; it now uses `tools.today()`, Tbilisi time, pinned in tests.
+- **Caught by:** running the tests (2 and 3); reading the starter against AGENTS.md (1 and 4). Four mutations, each caught by `tests/test_agent.py`: the loop running `save_reminder` itself (4 tests fail), `confirm()` reading the plan without removing it (2 fail), the loop offered every tool (1 fails), `Approval` without `extra="forbid"` (1 fails). All restored.
+- **Found on the way:** four tests on `main` had been red since 10 November. `tests/conftest.py` pinned the tools' clock but not the memory store's, so the test reminder for HW2 (due 2026-11-08) expired on the real date. Fixed first, in its own pull request (`slice-fix-test-clock`).
+- **Verified:** plain `pytest`, offline with no key: 150 passed (5 new in `tests/test_agent.py`).
+- **AGENTS.md change:** one "Never" line (never run a tool in NEEDS_YES from inside a loop) and a supervised-loop convention.
+- **Cost:** one session; 0 live model calls by the agent.
