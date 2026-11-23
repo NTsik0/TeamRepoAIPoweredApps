@@ -35,3 +35,18 @@ Product pull request [#18](https://github.com/NTsik0/TeamRepoAIPoweredApps/pull/
 - Green run on `main` after the merge (`5135de6`): https://github.com/NTsik0/TeamRepoAIPoweredApps/actions/runs/40740068511
 
 Plain `pytest` on `main`: 117 passed, including all seven cases.
+
+## An error message the model used (Lab 7)
+
+Lab 7 asks whether my tool's failures say what to do next, not only what went wrong. A live run showed that they do. On 2026-11-23 our Lab 7 loop (`src/agent.py`, default model `google/gemini-3.8-flash`) was asked "Remind me about HW2 Tool Contract, it is due 2026-11-25". `logs/tools.jsonl` from that run:
+
+| Step | Call | Result |
+|---|---|---|
+| 1 | `find_deadlines(course="cs6920", about="HW2 Tool Contract")` | refused: "No deadline in the cs6920 document mentions 'HW2 Tool Contract'. Try a shorter word, like HW2, or leave 'about' out to list every deadline." |
+| 2 | `find_deadlines(course="cs6920", about="HW2")` | ok: the Homework sentence, quoted word for word |
+
+The first call missed because the document writes `HW2 "Tool Contract"` with quote marks. The model did what the message said and recovered in one step, with no person involved. A message that only said "no match" would have left it guessing. The caller in the log is a 12-character hash, as the contract says. No change to the tool was needed.
+
+## Rechecked on 2026-11-23
+
+Before submitting I ran plain `pytest` on `main` again and it was **not** green: 4 failed, 141 passed. None of the failures were in my cases (all seven in `evals/tools/NTsik0.yaml` still passed). They were in the Week 6 memory tests: `tests/conftest.py` pinned the tools' clock to 2026-10-28 but not the memory store's, so the test reminder for HW2 (due 2026-11-08) expired on the real date, 10 November. Pinning both clocks to the same day (pull request `slice-fix-test-clock`) brought `main` back to 145 passed. Lesson for an evidence file: a green run is true on the day it ran; a test that reads the real clock can go red later with no change to the code.
