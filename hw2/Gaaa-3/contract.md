@@ -4,6 +4,8 @@
 
 **In one sentence, for the model:** Find the sections of the course documents that answer a question, each with the document it came from. Reads only.
 
+**Read or consequential:** read. It changes nothing, and within a process the same question returns the same sections, so a supervised loop could run it without asking anyone — `save_reminder` is the only action that waits for a yes. The one qualification is the per-process index cache: after a restart with a changed `data/corpus/` or a rebuilt `data/index/`, the same question can return different sections.
+
 | | |
 |---|---|
 | **Effect** | reads. No model call: `hybrid()` ranks the sections and the text is copied from the document, so a section cannot be invented |
