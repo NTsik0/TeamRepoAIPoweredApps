@@ -6,14 +6,16 @@ from contextlib import asynccontextmanager
 from datetime import date
 from functools import lru_cache
 from pathlib import Path
+from typing import Annotated
 
 import httpx
 from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from PIL import UnidentifiedImageError
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from src import act as tool_use
+from src import agent
 from src import answer as grounded
 from src import deadline_checks, deadline_extract, memory
 from src import index as course_index
@@ -169,6 +171,50 @@ def act_endpoint(body: ActRequest, x_student_id: str | None = Header(default=Non
     except (httpx.HTTPError, RuntimeError) as e:
         return JSONResponse(status_code=502, content={"error": {
             "code": "model_unavailable", "message": f"the model call failed: {type(e).__name__}"}})
+
+
+# --- Week 7 · a supervised loop: the model proposes, the student confirms (docs/agent-contract.md) ----
+
+def get_planner():
+    """The model the loop asks. Tests override this with a scripted fake."""
+    return agent.complete_tools
+
+
+class PlanRequest(BaseModel):
+    goal: str = Field(min_length=3, max_length=500)
+
+
+class Approval(BaseModel):
+    """Action ids only, never arguments: what runs is what was parked, not what the request says."""
+    model_config = ConfigDict(extra="forbid")
+    approve: list[Annotated[str, Field(pattern=r"^a[0-9]{1,2}$")]] = Field(max_length=agent.MAX_STEPS * 4)
+
+
+def signed_in(student: str | None) -> JSONResponse | None:
+    if student is None:
+        return JSONResponse(status_code=401, content={"error": {
+            "code": "sign_in_required", "message": "Send X-Student-Id: a plan saves reminders in your name"}})
+    return bad_header(student, None)
+
+
+@app.post("/plan")
+def plan(body: PlanRequest, x_student_id: str | None = Header(default=None), llm=Depends(get_planner)):
+    """Run the loop. Reads run; save_reminder is parked and comes back in 'proposed'. Nothing is saved here."""
+    if (err := signed_in(x_student_id)):
+        return err
+    try:
+        return agent.run(body.goal, x_student_id, llm=llm)
+    except (httpx.HTTPError, RuntimeError) as e:
+        return JSONResponse(status_code=502, content={"error": {
+            "code": "model_unavailable", "message": f"the model call failed: {type(e).__name__}"}})
+
+
+@app.post("/plan/confirm")
+def plan_confirm(body: Approval, x_student_id: str | None = Header(default=None)):
+    """The student's yes. Takes action ids and runs only those, once. No model involved."""
+    if (err := signed_in(x_student_id)):
+        return err
+    return {"done": agent.confirm(x_student_id, body.approve)}
 
 
 # --- Week 6 · streaming chat and session state (docs/state-contract.md) -------------
