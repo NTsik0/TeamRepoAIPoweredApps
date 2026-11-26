@@ -21,6 +21,28 @@
 
 The tool is also served through the MCP door: `tests/test_find_deadlines.py::test_mcp_marks_it_read_only_and_serves_it` lists it with `read_only_hint: true` and calls it through `Client(mcp)`, and `tests/test_mcp.py` checks that both doors describe its arguments identically.
 
+## Through the MCP door
+
+**Client:** the Claude desktop app on Windows, with our server registered in `claude_desktop_config.json` as `coursemate` (`python -m src.mcp_server`, started by the app, not by me). Run on 2026-11-27, Tbilisi time.
+
+**The sentence I typed:** `When is HW2 due in cs6920? Use the coursemate tools.`
+
+**The tool calls it made, in order:**
+
+| # | Call | Result |
+|---|---|---|
+| 1 | `find_deadlines(course="cs6920", about="HW2")` | ok: `total: 1`, section Homework, quote "HW2 "Tool Contract" is worth 5 points, is released with the Week 5 lab and is due at the end of Week 7." |
+| 2 | `search_course_docs(course="cs6920", question="What dates does Week 7 cover and when does the week end?")` | failed: "Error executing tool search_course_docs" |
+| 3 | `search_course_docs(course="cs6920", question="When is the end of Week 7")` | failed: same error |
+
+The model answered with my tool's quote word for word and said it could not find a calendar date for the end of Week 7, instead of guessing one.
+
+**What the door showed that the tests did not.** My tool worked from outside the repo because `src/courses.py` builds its path from the code file (`Path(__file__)...`). Calls 2 and 3 are Guram's tool, which reads `data/corpus` relative to the folder the server is started from. The tests always start in the repo root, so all 151 pass, but the desktop app starts the server elsewhere, so the corpus is empty and the index build crashes (`ValueError`, which is not a `ToolFailure`, so the model only saw a generic error). I reproduced it by calling the tool from another folder. The same run also showed that the MCP server calls the tools directly, not through `call_tool()`, so these calls did not reach `logs/tools.jsonl`: the last line there is from 2026-11-22. The screenshots are the evidence instead.
+
+![The answer in the Claude desktop app: Coursemate used, find_deadlines ok, search_course_docs failed twice](mcp-door-answer.png)
+
+![The find_deadlines request (About: HW2, Course: cs6920) and its response, and the first failed search_course_docs call](mcp-door-calls.png)
+
 ## The red run: proof the gate blocks
 
 Branch `hw2-NTsik0-red` removed the pattern from `Keyword` (the type of `about`) in `src/contracts.py`. The one-line diff:
