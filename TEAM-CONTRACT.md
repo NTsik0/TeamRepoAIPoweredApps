@@ -1,4 +1,4 @@
-# Team Contract · KIU CourseMate
+# Team Contract · Make Sense?
 
 *Due with team lock, end of Week 3. Signed by everyone. Short beats ceremonial.*
 

@@ -1,4 +1,4 @@
-# Design Review · KIU CourseMate
+# Design Review · KIU CourseMate · Make Sense?
 
 Members: Nikoloz Tsikaridze · NTsik0 · repo keeper · Guram Tsiklauri · Gaaa-3 · spec keeper · eval keeper shared · Repo: https://github.com/NTsik0/TeamRepoAIPoweredApps · Graded commit: tag `design-review`
 

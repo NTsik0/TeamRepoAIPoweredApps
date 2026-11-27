@@ -1,6 +1,6 @@
 # KIU CourseMate
 
-Answers KIU students' questions about a course (deadlines, grading, policies) from the official course documents, and says so when the answer isn't there. CS6920 capstone · Fall 2026 · KIU CourseMate team · Nikoloz Tsikaridze, Guram Tsiklauri
+Answers KIU students' questions about a course (deadlines, grading, policies) from the official course documents, and says so when the answer isn't there. CS6920 capstone · Fall 2026 · team Make Sense? · Nikoloz Tsikaridze, Guram Tsiklauri
 
 **Status:** Week 4 · `POST /ask/grounded` answers questions about CS6920 from 12 course documents, cites the section every sentence came from, and refuses when it cannot. Every model call logs tokens, cost and latency.
 

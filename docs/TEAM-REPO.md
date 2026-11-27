@@ -1,4 +1,4 @@
-# Team Repo Guide · KIU CourseMate
+# Team Repo Guide · Make Sense?
 
 *Your team's GitHub rulebook for the whole capstone, from Lab 2 to Demo Day. Copy this file to `docs/TEAM-REPO.md`, fill in section 1 together in Lab 2, and keep it true. Sections 2 to 11 are the course standard: they change only with my agreement (last section).*
 
