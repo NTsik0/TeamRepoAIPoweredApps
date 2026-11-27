@@ -9,6 +9,7 @@ os.environ["COURSEMATE_OFFLINE"] = "1"
 os.environ["COURSEMATE_LOG_PATH"] = os.path.join(_tmp, "usage.jsonl")
 os.environ["COURSEMATE_ANSWER_LOG"] = os.path.join(_tmp, "answers.jsonl")
 os.environ["COURSEMATE_TOOL_LOG"] = os.path.join(_tmp, "tools.jsonl")
+os.environ["COURSEMATE_ROUTER_LOG"] = os.path.join(_tmp, "router.jsonl")   # Week 8: the router never writes to logs/
 os.environ["COURSEMATE_TODAY"] = "2026-10-28"
 os.environ.pop("COURSEMATE_MIN_SCORE", None)
 os.environ.pop("COURSEMATE_STUDENT", None)

@@ -24,6 +24,7 @@ test:     pytest   (must pass on a clean clone, with no network and no OPENROUTE
 ## Always
 - Run the test command exactly as written (plain `pytest`, not `python -m pytest`) before saying you are done, and paste the result
 - Propose a plan and wait for approval before writing files
+- Every model call goes through `complete()` in `src/router.py`; never call a model directly. Today `POST /plan` does; `/ask`, the streaming chat and embeddings still call `src/llm.py` and move over one at a time (`docs/fallback-plan.md`)
 
 ## Ask first
 - Adding a dependency

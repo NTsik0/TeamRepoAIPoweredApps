@@ -32,6 +32,7 @@ OFFLINE = os.environ.get("COURSEMATE_OFFLINE") == "1"
 # gemini-3.8-flash is on a promotional price. Re-check on openrouter.ai before trusting a cost.
 PRICES = {
     "google/gemini-3.8-flash": (0.75, 3.75),
+    "anthropic/claude-haiku-5.5": (0.10, 0.50),     # Week 8: the fallback model. Course reference price, checked 23 November 2026
     "openai/text-embedding-3-small": (0.02, 0.0),
     offline.MODEL: (0.0, 0.0),
 }
@@ -192,28 +193,36 @@ def embed_model_name() -> str:
 
 # --- Week 5 · function calling -----------------------------------------------
 
-def complete_tools(messages: list[dict], tools: list[dict], max_tokens: int = 1500) -> dict:
-    """One model turn that may ask for tools. Returns {content, tool_calls, reasoning_details};
+def complete_tools(messages: list[dict], tools: list[dict], max_tokens: int = 1500,
+                   timeout: float | None = None, model: str | None = None) -> dict:
+    """One model turn that may ask for tools. Returns {content, tool_calls, reasoning_details, usage};
     each tool call is {id, name, arguments (a JSON string)}. Logged like every other call.
-    The model only ASKS for a tool: src/act.py decides whether it runs."""
+    The model only ASKS for a tool: src/act.py decides whether it runs.
+    Week 8: `model` and `timeout` let src/router.py ask a named model for a limited time. With no
+    tools (a plain question through the router), the request carries no `tools` field at all."""
     if OFFLINE:
         t0 = time.perf_counter()
         msg, tokens_in, tokens_out = offline.complete_tools(messages, tools)
         log_usage(offline.MODEL, tokens_in, tokens_out, _ms(t0), kind="tools")
         return msg
-    body = {"model": CHAT_MODEL, "messages": messages, "tools": tools, "tool_choice": "auto",
+    model = model or CHAT_MODEL
+    body = {"model": model, "messages": messages,
             "temperature": 0, "max_tokens": max_tokens, "reasoning": {"effort": "low"}}
+    if tools:
+        body.update(tools=tools, tool_choice="auto")
     t0 = time.perf_counter()
-    r = httpx.post(OPENROUTER_URL, headers={"Authorization": f"Bearer {_key()}"}, json=body, timeout=60)
+    r = httpx.post(OPENROUTER_URL, headers={"Authorization": f"Bearer {_key()}"}, json=body,
+                   timeout=timeout or 60)
     r.raise_for_status()
     data = r.json()
     usage = data.get("usage") or {}
-    log_usage(data.get("model") or CHAT_MODEL, int(usage.get("prompt_tokens", 0)),
-              int(usage.get("completion_tokens", 0)), _ms(t0), kind="tools")
+    line = log_usage(data.get("model") or model, int(usage.get("prompt_tokens", 0)),
+                     int(usage.get("completion_tokens", 0)), _ms(t0), kind="tools")
     m = data["choices"][0]["message"]
     calls = [{"id": c["id"], "name": c["function"]["name"], "arguments": c["function"].get("arguments") or "{}"}
              for c in (m.get("tool_calls") or [])]
-    return {"content": m.get("content"), "tool_calls": calls, "reasoning_details": m.get("reasoning_details")}
+    return {"content": m.get("content"), "tool_calls": calls, "reasoning_details": m.get("reasoning_details"),
+            "usage": {"cost_usd": line["cost_usd"]}}
 
 
 # --- Week 6 · streaming ---------------------------------------------------------

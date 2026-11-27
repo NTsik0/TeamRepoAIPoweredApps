@@ -19,6 +19,7 @@ from src import agent
 from src import answer as grounded
 from src import deadline_checks, deadline_extract, memory
 from src import index as course_index
+from src import router
 from src.chat import FORGET_PATH, chat_turn
 from src.courses import load_course
 from src.llm import LLMClient, OpenRouterClient, call_and_log
@@ -176,8 +177,9 @@ def act_endpoint(body: ActRequest, x_student_id: str | None = Header(default=Non
 # --- Week 7 · a supervised loop: the model proposes, the student confirms (docs/agent-contract.md) ----
 
 def get_planner():
-    """The model the loop asks. Tests override this with a scripted fake."""
-    return agent.complete_tools
+    """The model the loop asks: since Week 8, the fallback chain (src/router.py, docs/fallback-plan.md).
+    Tests override this with a scripted fake."""
+    return router.complete
 
 
 class PlanRequest(BaseModel):
